@@ -17,11 +17,9 @@ function Logger:init(level, showTimestamp)
     self.colors:add("WARNING", "0xFFFF00")
     self.colors:add("ERROR", "0xFF0000")
 
-    global:printMessage(tostring(self.levels))
 
     self.level = level or self.levels:get("DEBUG")
     self.showTimestamp = showTimestamp or false
-    global:printMessage(tostring(self.levels))
 end
 
 function Logger:getTimestamp()

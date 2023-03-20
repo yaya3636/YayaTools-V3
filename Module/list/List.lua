@@ -8,7 +8,6 @@ local list = class('List', {
 function list:init()
     if self.logger then
         self.logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])()
-        self.logger:log("Test")
     end
 end
 
