@@ -4,9 +4,6 @@ local class = dofile(moduleDirectory .. "Class.lua")
 local list = class("List", dofile(moduleDirectory .. "list\\List.lua"))
 local dictionary = class("Dictionary", dofile(moduleDirectory .. "dictionary\\Dictionary.lua"))
 dictionary.list = list
-
-local typedObject = class("TypedObject", dofile(moduleDirectory .. "typeChecker\\TypedObject.lua"))
-
 local ModuleLoader = class('ModuleLoader')
 
 local function addSecondaryInit(c, attributes)
@@ -51,38 +48,43 @@ function ModuleLoader:load(moduleName)
     else
         self.modulePaths:forEach(function(knownModuleName, modulePath)
             if string.lower(knownModuleName) == string.lower(moduleName) then
-                local classDefinition = dofile(modulePath)
-
-                local dependencies = {}
-                if classDefinition.dependencies then
-                    for _, dependencyPath in ipairs(classDefinition.dependencies) do
-                        local dependencyClass = self:load(dependencyPath)
-                        dependencies[string.lower(dependencyPath)] = dependencyClass
-                    end
-                end
-
-                if classDefinition.isTypedObject then
-                    newClass = typedObject:extend(moduleName)
-                else
-                    newClass = class(moduleName, classDefinition) 
-                end
-
-                for depName, depClass in pairs(dependencies) do
-                    newClass[depName] = depClass
-                end
-
-
-                newClass.newInstance = function() return newClass() end
-                newClass = addSecondaryInit(newClass, {logger = self.logger})
-
+                newClass = self:loadModuleFromFile(modulePath)
                 self.moduleLoaded:add(string.lower(moduleName), newClass)
             end
         end)
     end
-
     if newClass == nil then
         self.logger:log("Le module [" .. moduleName .. "] n'éxiste pas vérifié l'hortographe !", "ModuleLoader", 3)
     end
+    return newClass
+end
+
+function ModuleLoader:resolveDependencies(classDefinition)
+    local dependencies = {}
+    if classDefinition.dependencies then
+        for _, dependencyPath in ipairs(classDefinition.dependencies) do
+            local dependencyClass = self:load(dependencyPath)
+            dependencies[string.lower(dependencyPath)] = dependencyClass
+        end
+    end
+    return dependencies
+end
+
+function ModuleLoader:loadModuleFromFile(modulePath)
+    local classDefinition = dofile(modulePath)
+
+    local dependencies = self:resolveDependencies(classDefinition)
+    local newClass
+
+    newClass = class(modulePath:gsub("\\", "/"):match(".*/(.+)%.lua"), classDefinition)
+
+    for depName, depClass in pairs(dependencies) do
+        newClass[depName] = depClass
+    end
+
+    newClass.newInstance = function() return newClass() end
+    newClass = addSecondaryInit(newClass, {logger = self.logger})
+
     return newClass
 end
 

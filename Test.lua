@@ -4,11 +4,11 @@ local dictionary = moduleLoader:load("dictionary")
 local list = moduleLoader:load("list")
 local class = moduleLoader:load("class")
 local list3 = moduleLoader:load("list")
-
--- local wrong = moduleLoader:load("listt")
+local wrong = moduleLoader:load("listt")
 local logger = moduleLoader:load("logger")(1)
 
-global:printMessage(tostring(dictionary))
+logger:log(class.isClass(list))
+logger:log(tostring(dictionary))
 
 function move()
     local table = { "Test1", "Test2", "Test3", "Test4", "Test5" }
@@ -64,9 +64,9 @@ function move()
 end
 
 function bank()
-    global:printMessage("Func bank")
+    logger:log("Func bank")
 end
 
 function stopped()
-    global:printMessage("Func stopped")
+    logger:log("Func stopped")
 end
