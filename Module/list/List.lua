@@ -1,14 +1,15 @@
-local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
+--local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
 
-local list = class('List', {
-    items = {}
-})
+local list = {} --class('List', {
+--     items = {}
+-- })
 
 -- Constructeur de la classe List
 function list:init()
     if self.logger then
         self.logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])()
     end
+    self.items = {}
 end
 
 -- Méthode pour ajouter un élément à la liste
@@ -184,8 +185,8 @@ function list:count(item)
     return count
 end
 
-function list.fromTable(tbl)
-    local newList = list()
+function list:fromTable(tbl)
+    local newList = self.newInstance()
     for _, item in ipairs(tbl) do
         newList:add(item)
     end

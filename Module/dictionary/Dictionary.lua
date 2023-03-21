@@ -1,9 +1,42 @@
-local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
-local list = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\list\List.lua]])
+-- local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
+-- local list = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\list\List.lua]])
 
-local dictionary = class("Dictionary", {
-    data = {}
-})
+local dictionary = {
+    dependencies = {"list"}
+}
+
+-- Créer un dictionnaire à partir d'une table en utilisant les indices comme clés
+function dictionary:fromTableIndices(tbl)
+    local dict = self.newInstance()
+    for index, value in ipairs(tbl) do
+        dict:add(index, value)
+    end
+    return dict
+end
+
+function dictionary:fromTable(tbl)
+    local dict = self.newInstance()
+    for key, value in pairs(tbl) do
+        dict:add(key, value)
+    end
+    return dict
+end
+
+-- Créer un dictionnaire à partir d'une table en utilisant les éléments comme clés et leurs occurrences comme valeurs
+function dictionary:fromTableItems(tbl)
+    local dict = self.newInstance()
+    for _, value in ipairs(tbl) do
+        local count = dict:get(value) or 0
+        dict:add(value, count + 1)
+    end
+    return dict
+end
+
+
+
+--class("Dictionary", {
+--     data = {}
+-- })
 
 function dictionary:init()
     if self.logger then
@@ -86,7 +119,7 @@ function dictionary:getKeys()
     for key in pairs(self.data) do
         table.insert(keys, key)
     end
-    return list.fromTable(keys)
+    return self.list:fromTable(keys)
 end
 
 -- Récupérer toutes les valeurs sous forme de tableau
@@ -95,7 +128,7 @@ function dictionary:getValues()
     for _, value in pairs(self.data) do
         table.insert(values, value)
     end
-    return list.fromTable(values)
+    return self.list:fromTable(values)
 end
 
 -- Appliquer une fonction à chaque paire clé-valeur du dictionnaire
@@ -107,7 +140,7 @@ end
 
 -- Récupérer un sous-ensemble du dictionnaire en fonction des clés
 function dictionary:subset(keys)
-    local result = self.c()
+    local result = self.newInstance()
     for _, key in ipairs(keys) do
         if self:contains(key) then
             result:add(key, self:get(key))
@@ -118,7 +151,7 @@ end
 
 -- Filtrer les éléments du dictionnaire en fonction d'une fonction de condition
 function dictionary:filter(condition)
-    local result = self.c()
+    local result = self.newInstance()
     for key, value in pairs(self.data) do
         if condition(key, value) then
             result:add(key, value)
@@ -129,7 +162,7 @@ end
 
 -- Inverser les clés et les valeurs du dictionnaire
 function dictionary:invert()
-    local result = self.c()
+    local result = self.newInstance()
     for key, value in pairs(self.data) do
         result:add(value, key)
     end
@@ -163,7 +196,7 @@ end
 
 -- Transformer les clés et les valeurs du dictionnaire en utilisant une fonction
 function dictionary:map(func)
-    local result = self.c()
+    local result = self.newInstance()
     for key, value in pairs(self.data) do
         local new_key, new_value = func(key, value)
         result:add(new_key, new_value)
@@ -173,7 +206,7 @@ end
 
 -- Compter les occurrences de valeurs dans le dictionnaire
 function dictionary:valueCount()
-    local counts = self.c()
+    local counts = self.newInstance()
     for _, value in pairs(self.data) do
         local count = counts:get(value) or 0
         counts:add(value, count + 1)
@@ -183,7 +216,7 @@ end
 
 -- Sélectionner les n premiers éléments du dictionnaire
 function dictionary:nFirstItems(n)
-    local result = self.c()
+    local result = self.newInstance()
     local count = 0
     for key, value in pairs(self.data) do
         if count < n then
@@ -198,7 +231,7 @@ end
 
 -- Sélectionner les n derniers éléments du dictionnaire
 function dictionary:nLastItems(n)
-    local result = self.c()
+    local result = self.newInstance()
     local keys = self:getKeys()
     local count = 0
     for i = #keys, 1, -1 do
@@ -215,7 +248,7 @@ end
 
 -- Copier le dictionnaire
 function dictionary:copy()
-    local copied_dict = self.c()
+    local copied_dict = self.newInstance()
     for key, value in pairs(self.data) do
         copied_dict:add(key, value)
     end
@@ -227,38 +260,9 @@ function dictionary:isEmpty()
     return next(self.data) == nil
 end
 
--- Statique
-
--- Créer un dictionnaire à partir d'une table en utilisant les indices comme clés
-function dictionary.fromTableIndices(tbl)
-    local dict = dictionary()
-    for index, value in ipairs(tbl) do
-        dict:add(index, value)
-    end
-    return dict
-end
-
-function dictionary.fromTable(tbl)
-    local dict = dictionary()
-    for key, value in pairs(tbl) do
-        dict:add(key, value)
-    end
-    return dict
-end
-
--- Créer un dictionnaire à partir d'une table en utilisant les éléments comme clés et leurs occurrences comme valeurs
-function dictionary.fromTableItems(tbl)
-    local dict = dictionary()
-    for _, value in ipairs(tbl) do
-        local count = dict:get(value) or 0
-        dict:add(value, count + 1)
-    end
-    return dict
-end
-
 -- Fusionner plusieurs dictionnaires
-function dictionary.mergeMultiple(dictionaries)
-    local result = dictionary()
+function dictionary:mergeMultipl(dictionaries)
+    local result = self.newInstance()
     for _, dic in ipairs(dictionaries) do
         result:merge(dic)
     end

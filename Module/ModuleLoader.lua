@@ -1,48 +1,89 @@
 local moduleDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Module\]]
-
 local class = dofile(moduleDirectory .. "Class.lua")
-local dictionary = dofile(moduleDirectory .. "dictionary\\Dictionary.lua")
-local logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])
 
-ModuleLoader = class('ModuleLoader')
+local list = class("List", dofile(moduleDirectory .. "list\\List.lua"))
+local dictionary = class("Dictionary", dofile(moduleDirectory .. "dictionary\\Dictionary.lua"))
+dictionary.list = list
+
+local typedObject = class("TypedObject", dofile(moduleDirectory .. "typeChecker\\TypedObject.lua"))
+
+local ModuleLoader = class('ModuleLoader')
+
+local function addSecondaryInit(c, attributes)
+    local originalInit = c.init
+
+    c.init = function(self, ...)
+        if originalInit then
+            originalInit(self, ...)
+        end
+
+        for k, v in pairs(attributes) do
+            self[k] = v
+        end
+    end
+
+    return c
+end
 
 function ModuleLoader:init(loggerLevel)
-    self.loggerLevel = loggerLevel or 2
-    self.paths = dictionary()
-    self.classLoaded = dictionary()
-    self.paths:add("Dictionary", moduleDirectory .. "dictionary\\Dictionary.lua")
-    self.paths:add("List", moduleDirectory .. "list\\List.lua")
-    self.paths:add("Logger", moduleDirectory .. "utils\\Logger.lua")
-    self.logger = logger(self.loggerLevel)
+    self.modulePaths = dictionary()
+    self.modulePaths:add("List", moduleDirectory .. "list\\List.lua")
+    self.modulePaths:add("Dictionary", moduleDirectory .. "dictionary\\Dictionary.lua")
+    self.modulePaths:add("Logger", moduleDirectory .. "utils\\Logger.lua")
+    self.modulePaths:add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
+    self.modulePaths:add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
+
+
+    self.moduleLoaded = dictionary()
+    self.moduleLoaded:add("class", class)
+
+    self.logger = class("Logger", dofile(moduleDirectory .. "utils\\Logger.lua"))
+    self.logger.dictionary = dictionary
+    self.logger = self.logger(loggerLevel)
+
 end
 
--- Fonction pour ajouter un chemin de module
-function ModuleLoader:addPath(path)
-end
-
--- Fonction pour charger un module par son nom
 function ModuleLoader:load(moduleName)
-    local ret
-    if not self.classLoaded:contains(string.lower(moduleName)) then
-        self.paths:forEach(function(k, modulePath)
-            if string.lower(k) == string.lower(moduleName) then
-                ret = dofile(modulePath)
-                self.classLoaded:add(string.lower(moduleName), ret)
-                return
+    local newClass
+
+    if self.moduleLoaded:contains(moduleName) then
+        newClass = self.moduleLoaded:get(moduleName)
+    else
+        self.modulePaths:forEach(function(knownModuleName, modulePath)
+            if string.lower(knownModuleName) == string.lower(moduleName) then
+                local classDefinition = dofile(modulePath)
+
+                local dependencies = {}
+                if classDefinition.dependencies then
+                    for _, dependencyPath in ipairs(classDefinition.dependencies) do
+                        local dependencyClass = self:load(dependencyPath)
+                        dependencies[string.lower(dependencyPath)] = dependencyClass
+                    end
+                end
+
+                if classDefinition.isTypedObject then
+                    newClass = typedObject:extend(moduleName)
+                else
+                    newClass = class(moduleName, classDefinition) 
+                end
+
+                for depName, depClass in pairs(dependencies) do
+                    newClass[depName] = depClass
+                end
+
+
+                newClass.newInstance = function() return newClass() end
+                newClass = addSecondaryInit(newClass, {logger = self.logger})
+
+                self.moduleLoaded:add(string.lower(moduleName), newClass)
             end
         end)
-    else
-        ret = self.classLoaded:get(string.lower(moduleName))
     end
 
-    if not ret then
-        self.logger:log("Le module [" .. moduleName .. "] n'éxiste pas vérifié l'hortographe !", "ModuleLoader", 4)
-        return nil
+    if newClass == nil then
+        self.logger:log("Le module [" .. moduleName .. "] n'éxiste pas vérifié l'hortographe !", "ModuleLoader", 3)
     end
-
-    ret.loggerLevel = self.loggerLevel
-    ret.logger = self.logger
-    return ret
+    return newClass
 end
 
 return ModuleLoader
