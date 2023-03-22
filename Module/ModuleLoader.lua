@@ -2,8 +2,14 @@ local moduleDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Module\]]
 local class = dofile(moduleDirectory .. "Class.lua")
 
 local list = class("List", dofile(moduleDirectory .. "list\\List.lua"))
+list.newInstance = list
 local dictionary = class("Dictionary", dofile(moduleDirectory .. "dictionary\\Dictionary.lua"))
 dictionary.list = list
+dictionary.newInstance = dictionary
+local logger = class("Logger", dofile(moduleDirectory .. "utils\\Logger.lua"))
+logger.dictionary = dictionary
+logger.newInstance = logger
+
 local ModuleLoader = class('ModuleLoader')
 
 local function addSecondaryInit(c, attributes)
@@ -25,6 +31,8 @@ end
 function ModuleLoader:init(loggerLevel)
     self.modulePaths = dictionary()
     self.modulePaths:add("List", moduleDirectory .. "list\\List.lua")
+    self.modulePaths:add("LinkedList", moduleDirectory .. "list\\LinkedList.lua")
+    self.modulePaths:add("Node", moduleDirectory .. "list\\Node.lua")
     self.modulePaths:add("Dictionary", moduleDirectory .. "dictionary\\Dictionary.lua")
     self.modulePaths:add("Logger", moduleDirectory .. "utils\\Logger.lua")
     self.modulePaths:add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
@@ -34,22 +42,21 @@ function ModuleLoader:init(loggerLevel)
     self.moduleLoaded = dictionary()
     self.moduleLoaded:add("class", class)
 
-    self.logger = class("Logger", dofile(moduleDirectory .. "utils\\Logger.lua"))
-    self.logger.dictionary = dictionary
-    self.logger = self.logger(loggerLevel)
-
+    self.logger = logger(loggerLevel)
+    self.logger:filterHeader("dictionary", true)
 end
 
 function ModuleLoader:load(moduleName)
     local newClass
 
-    if self.moduleLoaded:contains(moduleName) then
+    if self.moduleLoaded:containsKey(moduleName) then
         newClass = self.moduleLoaded:get(moduleName)
     else
         self.modulePaths:forEach(function(knownModuleName, modulePath)
             if string.lower(knownModuleName) == string.lower(moduleName) then
                 newClass = self:loadModuleFromFile(modulePath)
                 self.moduleLoaded:add(string.lower(moduleName), newClass)
+                return
             end
         end)
     end
@@ -86,6 +93,10 @@ function ModuleLoader:loadModuleFromFile(modulePath)
     newClass = addSecondaryInit(newClass, {logger = self.logger})
 
     return newClass
+end
+
+function ModuleLoader:listLoggerFilteredHeaders()
+    return self.logger:listFilteredHeaders()
 end
 
 return ModuleLoader

@@ -1,17 +1,8 @@
---local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
-
-local list = {} --class('List', {
---     items = {}
--- })
-
+local list = {}
 -- Constructeur de la classe List
 function list:init()
-    if self.logger then
-        self.logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])()
-    end
     self.items = {}
 end
-
 -- Méthode pour ajouter un élément à la liste
 function list:add(item)
     -- if self.logger then
@@ -31,8 +22,12 @@ function list:remove(index)
 end
 
 -- Méthode pour obtenir la taille de la liste
-function list:size()
-    return #self.items
+function list:length()
+    local i = 0
+    for _ in pairs(self.items) do
+        i = i + 1
+    end
+    return i
 end
 
 function list:indexOf(item)
@@ -191,6 +186,36 @@ function list:fromTable(tbl)
         newList:add(item)
     end
     return newList
+end
+
+function list.__pairs(v)
+    local key, value
+    return function()
+        key, value = next(v.items, key)
+        return key, value
+    end
+end
+
+function list.__ipairs(v)
+    local function keysAsIndexIterator(dict, prevIdx)
+        prevIdx = prevIdx + 1
+        local key = dict.sortedKeys[prevIdx]
+
+        if key then
+            return prevIdx, dict.items[key]
+        end
+    end
+
+    v.sortedKeys = {}
+    for key in pairs(v.items) do
+        table.insert(v.sortedKeys, key)
+    end
+
+    return keysAsIndexIterator, v, 0
+end
+
+function list.__len(v)
+    return v:length()
 end
 
 return list

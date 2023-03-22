@@ -1,14 +1,43 @@
 local moduleLoader = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\ModuleLoader.lua]])(1)
--- local class = moduleLoader:load("class")
 local dictionary = moduleLoader:load("dictionary")
 local list = moduleLoader:load("list")
 local class = moduleLoader:load("class")
 local list3 = moduleLoader:load("list")
 local wrong = moduleLoader:load("listt")
 local logger = moduleLoader:load("logger")(1)
+local linkedList = moduleLoader:load("linkedList")
+
 
 logger:log(class.isClass(list))
 logger:log(tostring(dictionary))
+logger:log(tostring(moduleLoader:listLoggerFilteredHeaders()))
+
+moduleLoader.logger:setLevel(2)
+moduleLoader.logger:setLevel(1)
+moduleLoader.logger:setLevel(3)
+moduleLoader.logger:setLevel(4)
+moduleLoader.logger:setLevel(1)
+moduleLoader.logger:setLevel(0)
+
+
+local dic = dictionary()
+local lst = list()
+local linked = linkedList()
+
+for i = 1, 10 do
+    dic:add("key" .. i, i)
+    lst:add("key" .. i)
+    linked:insertAt(i, "key" .. i)
+end
+logger:log(#dic)
+logger:log(#lst)
+logger:log(#linked)
+logger:log(linked:get(8))
+
+
+for k, v in ipairs(linked) do
+    logger:log(k .. "|" .. v)
+end
 
 function move()
     local table = { "Test1", "Test2", "Test3", "Test4", "Test5" }
@@ -17,6 +46,17 @@ function move()
     local lst = list()
     local lst2 = list:fromTable(table)
 
+    local otherTest = logger:listFilteredHeaders()
+
+    logger:log(tostring(otherTest))
+
+    logger:log(tostring(moduleLoader.logger.filteredHeaders:getKeys()))
+
+    logger:log(tostring(moduleLoader:listLoggerFilteredHeaders()))
+    local test = moduleLoader:listLoggerFilteredHeaders()
+    test:forEach(function(v)
+        logger:log(tostring(v))
+    end)
 
     lst:add("key")
     lst:add("key2")
@@ -36,7 +76,8 @@ function move()
 
     lst2 = dicCopy:getKeys()
 
-    local merged = dictionary:mergeMultipl({ dic, dicCopy })
+    local merged = dictionary:mergeMultiple({ dic, dicCopy })
+
 
     dic:forEach(function(k, v)
         logger:log(k .. " | " .. v)
@@ -50,10 +91,10 @@ function move()
     --     logger:log(k .. " | " .. v, "dev")
     -- end)
 
-    -- local keys = merged:getKeys()
-    -- keys:forEach(function(v)
-    --     logger:log(v, "dev")
-    -- end)
+    local keys = merged:getKeys()
+    keys:forEach(function(v)
+        logger:log(v, "dev")
+    end)
 
     lst:forEach(function(v)
         logger:log(v)

@@ -1,8 +1,5 @@
--- local class = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\Class.lua]])
--- local list = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\list\List.lua]])
-
 local dictionary = {
-    dependencies = {"list"}
+    dependencies = { "list" }
 }
 
 -- Créer un dictionnaire à partir d'une table en utilisant les indices comme clés
@@ -32,12 +29,6 @@ function dictionary:fromTableItems(tbl)
     return dict
 end
 
-
-
---class("Dictionary", {
---     data = {}
--- })
-
 function dictionary:init()
     if self.logger then
         self.logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])(self.loggerLevel)
@@ -49,7 +40,9 @@ end
 -- Ajouter une paire clé-valeur
 function dictionary:add(key, value)
     if self.logger then
-        self.logger:log("La paire clef/valeur [ " .. tostring(key) .. " | " .. tostring(value) .. " ] a été ajouté au dictionnaire", "Dictionary")
+        self.logger:log(
+        "La paire clef/valeur [ " .. tostring(key) .. " | " .. tostring(value) .. " ] a été ajouté au dictionnaire",
+        "Dictionary")
     end
     self.data[key] = value
 end
@@ -58,10 +51,42 @@ end
 function dictionary:get(key)
     if self.logger then
         if self.data[key] == nil then
-            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (get)", "Dictionary", 3)
+            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (get)", "Dictionary")
         end
     end
     return self.data[key]
+end
+
+-- Récupére toutes les clés associées à une valeur spécifique
+function dictionary:getByValue(value)
+    local keys = self.list()
+    for key, val in pairs(self.data) do
+        if val == value then
+            keys:add(key)
+        end
+    end
+    return keys
+end
+
+-- Recherche la première paire clé-valeur qui satisfait une condition donnée
+function dictionary:find(predicate)
+    for key, value in pairs(self.data) do
+        if predicate(key, value) then
+            return key, value
+        end
+    end
+    return nil, nil
+end
+
+-- Recherche toutes les paires clé-valeur qui satisfont une condition donnée
+function dictionary:findAll(predicate)
+    local results = self.list()
+    for key, value in pairs(self.data) do
+        if predicate(key, value) then
+            results:add({ key = key, value = value })
+        end
+    end
+    return results
 end
 
 -- Obtenir la valeur la clé d'une valeur
@@ -72,7 +97,7 @@ function dictionary:getKey(value)
         end
     end
     if self.logger then
-        self.logger:log("La valeur [ " .. tostring(value) .. " ] n'a pas été trouvé. (getKey)", "Dictionary", 3)
+        self.logger:log("La valeur [ " .. tostring(value) .. " ] n'a pas été trouvé. (getKey)", "Dictionary")
     end
     return nil
 end
@@ -81,7 +106,7 @@ end
 function dictionary:remove(key)
     if self.logger then
         if self.data[key] == nil then
-            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (Remove)", "Dictionary", 3)
+            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (Remove)", "Dictionary")
         end
     end
     self.data[key] = nil
@@ -93,8 +118,23 @@ function dictionary:clear()
 end
 
 -- Vérifier si une clé existe
-function dictionary:contains(key)
+function dictionary:containsKey(key)
     return self.data[key] ~= nil
+end
+
+-- Vérifier si une valeur existe
+function dictionary:containsValue(value)
+    for _, v in pairs(self.data) do
+        if v == value then
+            return true
+        end
+    end
+    return false
+end
+
+-- Vérifier si une pairs clé/valeur existe
+function dictionary:containsPair(key, value)
+    return self.data[key] == value
 end
 
 -- Obtenir la taille du dictionnaire
@@ -142,7 +182,7 @@ end
 function dictionary:subset(keys)
     local result = self.newInstance()
     for _, key in ipairs(keys) do
-        if self:contains(key) then
+        if self:containsKey(key) then
             result:add(key, self:get(key))
         end
     end
@@ -191,7 +231,7 @@ function dictionary:randomItem()
         return nil, nil
     end
     local random_key = keys[global:random(1, #keys)]
-    return {key = random_key, item = self.data[random_key]}
+    return { key = random_key, item = self.data[random_key] }
 end
 
 -- Transformer les clés et les valeurs du dictionnaire en utilisant une fonction
@@ -200,6 +240,26 @@ function dictionary:map(func)
     for key, value in pairs(self.data) do
         local new_key, new_value = func(key, value)
         result:add(new_key, new_value)
+    end
+    return result
+end
+
+-- Transformer les clés du dictionnaire en utilisant une fonction
+function dictionary:mapKeys(func)
+    local result = self.newInstance()
+    for key, value in pairs(self.data) do
+        local new_key = func(key)
+        result:add(new_key, value)
+    end
+    return result
+end
+
+-- Transformer les valeurs du dictionnaire en utilisant une fonction
+function dictionary:mapValues(func)
+    local result = self.newInstance()
+    for key, value in pairs(self.data) do
+        local new_value = func(value)
+        result:add(key, new_value)
     end
     return result
 end
@@ -246,6 +306,46 @@ function dictionary:nLastItems(n)
     return result
 end
 
+-- Vérifie si au moins une paire clé-valeur satisfait une condition donnée
+function dictionary:some(predicate)
+    for key, value in pairs(self.data) do
+        if predicate(key, value) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Vérifie si toutes les paires clé-valeur satisfont une condition donnée
+function dictionary:every(predicate)
+    for key, value in pairs(self.data) do
+        if not predicate(key, value) then
+            return false
+        end
+    end
+    return true
+end
+
+-- Compte le nombre de paires clé-valeur qui satisfont une condition donnée
+function dictionary:count(predicate)
+    local count = 0
+    for key, value in pairs(self.data) do
+        if predicate(key, value) then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+-- Récupére le nombre de pairs clés-valeurs dans le dictionnaire
+function dictionary:length()
+    local l = 0
+    for _ in pairs(self.data) do
+        l = l + 1
+    end
+    return l
+end
+
 -- Copier le dictionnaire
 function dictionary:copy()
     local copied_dict = self.newInstance()
@@ -255,13 +355,21 @@ function dictionary:copy()
     return copied_dict
 end
 
+function dictionary:enumerate()
+    local enumerated = {}
+    for key, value in pairs(self.data) do
+        enumerated[key] = value
+    end
+    return enumerated
+end
+
 -- Vérifier si le dictionnaire est vide
 function dictionary:isEmpty()
-    return next(self.data) == nil
+    return self:length() ~= 0
 end
 
 -- Fusionner plusieurs dictionnaires
-function dictionary:mergeMultipl(dictionaries)
+function dictionary:mergeMultiple(dictionaries)
     local result = self.newInstance()
     for _, dic in ipairs(dictionaries) do
         result:merge(dic)
@@ -269,5 +377,34 @@ function dictionary:mergeMultipl(dictionaries)
     return result
 end
 
+function dictionary.__pairs(v)
+    local key, value
+    return function()
+        key, value = next(v.data, key)
+        return key, value
+    end
+end
+
+function dictionary.__ipairs(v)
+    local function keysAsIndexIterator(dict, prevIdx)
+        prevIdx = prevIdx + 1
+        local key = dict.sortedKeys[prevIdx]
+
+        if key then
+            return prevIdx, dict.data[key]
+        end
+    end
+
+    v.sortedKeys = {}
+    for key in pairs(v.data) do
+        table.insert(v.sortedKeys, key)
+    end
+
+    return keysAsIndexIterator, v, 0
+end
+
+function dictionary.__len(v)
+    return v:length()
+end
 
 return dictionary

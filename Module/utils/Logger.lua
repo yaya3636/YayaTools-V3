@@ -1,10 +1,6 @@
---local moduleDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Module\]]
---local class = dofile(moduleDirectory .. "Class.lua")
---local dictionary = dofile(moduleDirectory .. "dictionary\\Dictionary.lua")
-
 local Logger = {
-    dependencies = {"dictionary"}
-}-- class('Logger')
+    dependencies = {"dictionary", "list"}
+}
 
 function Logger:init(level, showTimestamp)
     self.levels = self.dictionary()
@@ -22,6 +18,7 @@ function Logger:init(level, showTimestamp)
 
     self.level = level or self.levels:get("DEBUG")
     self.showTimestamp = showTimestamp or false
+    self.filteredHeaders = self.dictionary()
 end
 
 function Logger:getTimestamp()
@@ -34,7 +31,7 @@ function Logger:log(message, header, level)
     if level >= self.level then
         local levelName = self.levels:getKey(level) or "DEBUG"
         local color = self.colors:get(levelName) or self.colors:get("DEBUG")
-        if header then
+        if header and not self:isHeaderFiltered(header:upper()) then
             color = self.colors:get(header:upper()) or self.colors:get(levelName)
             message = "[" .. header .. "] " .. message
         end
@@ -46,9 +43,56 @@ function Logger:log(message, header, level)
     end
 end
 
+function Logger:debug(message, header)
+    self:log(message, header, self.levels:get("DEBUG"))
+end
+
+function Logger:info(message, header)
+    self:log(message, header, self.levels:get("INFO"))
+end
+
+function Logger:warning(message, header)
+    self:log(message, header, self.levels:get("WARNING"))
+end
+
+function Logger:error(message, header)
+    self:log(message, header, self.levels:get("ERROR"))
+end
+
 function Logger:addHeaderColor(header, color)
     self.colors:add(header:upper(), color)
     self:log("Couleur ajoutée pour l'en-tête " .. header, "Logger", 2)
+end
+
+function Logger:filterHeader(header, filter)
+    if filter then
+        self.filteredHeaders:add(header:upper())
+        self:info("En-tête filtré : " .. header, "Logger")
+    else
+        self.filteredHeaders:remove(header:upper())
+        self:info("En-tête non filtré : " .. header, "Logger")
+    end
+end
+
+function Logger:setLevel(level)
+
+    for k, v in pairs(self.levels) do
+        if v == level then
+            self:info("Niveau de log défini sur : " .. k, "Logger")
+            self.level = v
+            return
+        end
+    end
+    self:warning("Niveau de log invalide : " .. level, "Logger")
+
+end
+
+function Logger:isHeaderFiltered(header)
+    return self.filteredHeaders:get(header:upper())
+end
+
+function Logger:listFilteredHeaders()
+    return self.filteredHeaders:getKeys()
 end
 
 return Logger
