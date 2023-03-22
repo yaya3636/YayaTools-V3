@@ -45,6 +45,7 @@ function dictionary:add(key, value)
         "Dictionary")
     end
     self.data[key] = value
+    return self
 end
 
 -- Obtenir la valeur d'une clé
@@ -110,11 +111,13 @@ function dictionary:remove(key)
         end
     end
     self.data[key] = nil
+    return self
 end
 
 -- Vider le dictionnaire
 function dictionary:clear()
     self.data = {}
+    return self
 end
 
 -- Vérifier si une clé existe
@@ -151,6 +154,7 @@ function dictionary:merge(other)
     for key, value in pairs(other.data) do
         self:add(key, value)
     end
+    return self
 end
 
 -- Récupérer toutes les clés sous forme de tableau
@@ -409,6 +413,20 @@ end
 
 function dictionary.__eq(self, other)
     return self:equals(other)
+end
+
+function dictionary.__add(self, other)
+    local result = self:copy()
+    result:merge(other)
+    return result
+end
+
+function dictionary.__sub(self, other)
+    local result = self:copy()
+    for key in pairs(other) do
+        result:remove(key)
+    end
+    return result
 end
 
 return dictionary

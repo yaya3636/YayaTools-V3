@@ -32,10 +32,19 @@ logger:log(dic == dic2)
 
 
 for i = 1, 10 do
-    dic:add("key" .. i, i)
+    dic:add("Dic1-" .. i, i)
+    dic2:add("Dic2-" .. i, i)
     lst:add("key" .. i)
+    lst2:add("key" .. i)
     linked:insertAt(i, "key" .. i)
+    linked2:insertAt(i, "key" .. i)
 end
+
+local dic3 = dic + dic2
+local lst3 = lst + lst2
+local linked3 = linked - linked2
+
+
 logger:log(#dic)
 logger:log(#lst)
 logger:log(#linked)
@@ -44,7 +53,7 @@ logger:log(linked == linked2)
 logger:log(lst == lst2)
 logger:log(dic == dic2)
 
-for k, v in ipairs(linked) do
+for k, v in pairs(linked3) do
     logger:log(k .. "|" .. v)
 end
 

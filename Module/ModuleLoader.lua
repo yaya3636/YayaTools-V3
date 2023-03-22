@@ -31,12 +31,12 @@ end
 function ModuleLoader:init(loggerLevel)
     self.modulePaths = dictionary()
     self.modulePaths:add("List", moduleDirectory .. "collections\\List.lua")
-    self.modulePaths:add("LinkedList", moduleDirectory .. "collections\\LinkedList.lua")
-    self.modulePaths:add("Node", moduleDirectory .. "collections\\Node.lua")
-    self.modulePaths:add("Dictionary", moduleDirectory .. "collections\\Dictionary.lua")
-    self.modulePaths:add("Logger", moduleDirectory .. "utils\\Logger.lua")
-    self.modulePaths:add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
-    self.modulePaths:add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
+    :add("LinkedList", moduleDirectory .. "collections\\LinkedList.lua")
+    :add("Node", moduleDirectory .. "collections\\Node.lua")
+    :add("Dictionary", moduleDirectory .. "collections\\Dictionary.lua")
+    :add("Logger", moduleDirectory .. "utils\\Logger.lua")
+    :add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
+    :add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
 
 
     self.moduleLoaded = dictionary()

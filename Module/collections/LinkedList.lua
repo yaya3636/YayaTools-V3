@@ -16,10 +16,12 @@ function linkedList:append(value)
         self.tail.next = newNode
         self.tail = newNode
     end
+    return self
 end
 
 function linkedList:insert(value)
     self:insertAt(1, value)
+    return self
 end
 
 function linkedList:insertAt(index, value)
@@ -128,6 +130,7 @@ end
 function linkedList:clear()
     self.head = nil
     self.tail = nil
+    return self
 end
 
 function linkedList:indexOf(value)
@@ -160,6 +163,7 @@ function linkedList:reverse()
     end
 
     self.head = prev
+    return self
 end
 
 function linkedList:map(callback)
@@ -291,5 +295,31 @@ function linkedList.__eq(self, otherList)
     return currentA == nil and currentB == nil
 end
 
+function linkedList.__add(self, other)
+    local newList = self:clone()
+    local current = other.head
+
+    while current do
+        newList:append(current.value)
+        current = current.next
+    end
+
+    return newList
+end
+
+function linkedList.__sub(self, other)
+    local newList = self:clone()
+    local current = other.head
+
+    while current do
+        while newList:contains(current.value) do
+            local index = newList:indexOf(current.value)
+            newList:removeAt(index)
+        end
+        current = current.next
+    end
+
+    return newList
+end
 
 return linkedList

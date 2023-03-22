@@ -9,6 +9,7 @@ function list:add(item)
     --     self.logger:log("Test")
     -- end
     table.insert(self.items, item)
+    return self
 end
 
 -- Méthode pour obtenir un élément à un index spécifique
@@ -19,7 +20,18 @@ end
 -- Méthode pour supprimer un élément à un index spécifique
 function list:remove(index)
     table.remove(self.items, index)
+    return self
 end
+
+function list:removeValue(value)
+    local index = self:indexOf(value)
+    while index do
+        self:remove(index)
+        index = self:indexOf(value)
+    end
+    return self
+end
+
 
 -- Méthode pour obtenir la taille de la liste
 function list:length()
@@ -47,6 +59,7 @@ function list:merge(anotherList)
     for _, item in ipairs(anotherList.items) do
         self:add(item)
     end
+    return self
 end
 
 function list:reverse()
@@ -55,18 +68,21 @@ function list:reverse()
         table.insert(reversed, self.items[i])
     end
     self.items = reversed
+    return self
 end
 
 function list:sort(comparator)
     table.sort(self.items, comparator)
+    return self
 end
 
 function list:clear()
     self.items = {}
+    return self
 end
 
 function list:map(func)
-    local mapped = list()
+    local mapped = self.newInstance()
     for _, item in ipairs(self.items) do
         mapped:add(func(item))
     end
@@ -74,7 +90,7 @@ function list:map(func)
 end
 
 function list:filter(predicate)
-    local filtered = list()
+    local filtered = self.newInstance()
     for _, item in ipairs(self.items) do
         if predicate(item) then
             filtered:add(item)
@@ -98,10 +114,11 @@ function list:removeItem(item)
     if index then
         self:remove(index)
     end
+    return self
 end
 
 function list:nFirstItems(n)
-    local firstItems = list()
+    local firstItems = self.newInstance()
     for i = 1, math.min(n, #self.items) do
         firstItems:add(self.items[i])
     end
@@ -109,7 +126,7 @@ function list:nFirstItems(n)
 end
 
 function list:nLastItems(n)
-    local lastItems = list()
+    local lastItems = self.newInstance()
     local start = math.max(1, #self.items - n + 1)
     for i = start, #self.items do
         lastItems:add(self.items[i])
@@ -122,7 +139,7 @@ function list:isEmpty()
 end
 
 function list:copy()
-    local newList = list()
+    local newList = self.newInstance()
     for _, item in ipairs(self.items) do
         newList:add(item)
     end
@@ -163,7 +180,7 @@ function list:unique()
         end
     end
 
-    local newList = list()
+    local newList = self.newInstance()
     for item, _ in pairs(uniqueItems) do
         newList:add(item)
     end
@@ -231,5 +248,22 @@ function list.__eq(self, anotherList)
 
     return true
 end
+
+function list.__add(self, other)
+    local result = self:copy()
+    result:merge(other)
+    return result
+end
+
+function list.__sub(self, other)
+    local result = self:copy()
+    for _, value in ipairs(other.items) do
+        while result:contains(value) do
+            result:removeValue(value)
+        end
+    end
+    return result
+end
+
 
 return list
