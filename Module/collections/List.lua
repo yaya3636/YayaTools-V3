@@ -196,7 +196,7 @@ function list.__pairs(v)
     end
 end
 
-function list.__ipairs(v)
+function list.__ipairs(self)
     local function keysAsIndexIterator(dict, prevIdx)
         prevIdx = prevIdx + 1
         local key = dict.sortedKeys[prevIdx]
@@ -206,16 +206,30 @@ function list.__ipairs(v)
         end
     end
 
-    v.sortedKeys = {}
-    for key in pairs(v.items) do
-        table.insert(v.sortedKeys, key)
+    self.sortedKeys = {}
+    for key in pairs(self.items) do
+        table.insert(self.sortedKeys, key)
     end
 
-    return keysAsIndexIterator, v, 0
+    return keysAsIndexIterator, self, 0
 end
 
-function list.__len(v)
-    return v:length()
+function list.__len(self)
+    return self:length()
+end
+
+function list.__eq(self, anotherList)
+    if #self.items ~= #anotherList.items then
+        return false
+    end
+
+    for index, value in ipairs(self.items) do
+        if value ~= anotherList.items[index] then
+            return false
+        end
+    end
+
+    return true
 end
 
 return list

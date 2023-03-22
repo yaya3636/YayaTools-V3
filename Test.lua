@@ -21,8 +21,15 @@ moduleLoader.logger:setLevel(0)
 
 
 local dic = dictionary()
+local dic2 = dictionary()
 local lst = list()
+local lst2 = list()
 local linked = linkedList()
+local linked2 = linkedList()
+logger:log(linked == linked2)
+logger:log(lst == lst2)
+logger:log(dic == dic2)
+
 
 for i = 1, 10 do
     dic:add("key" .. i, i)
@@ -32,8 +39,10 @@ end
 logger:log(#dic)
 logger:log(#lst)
 logger:log(#linked)
-logger:log(linked:get(8))
 
+logger:log(linked == linked2)
+logger:log(lst == lst2)
+logger:log(dic == dic2)
 
 for k, v in ipairs(linked) do
     logger:log(k .. "|" .. v)

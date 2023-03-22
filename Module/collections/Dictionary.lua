@@ -407,4 +407,8 @@ function dictionary.__len(v)
     return v:length()
 end
 
+function dictionary.__eq(self, other)
+    return self:equals(other)
+end
+
 return dictionary

@@ -1,9 +1,9 @@
 local moduleDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Module\]]
 local class = dofile(moduleDirectory .. "Class.lua")
 
-local list = class("List", dofile(moduleDirectory .. "list\\List.lua"))
+local list = class("List", dofile(moduleDirectory .. "collections\\List.lua"))
 list.newInstance = list
-local dictionary = class("Dictionary", dofile(moduleDirectory .. "dictionary\\Dictionary.lua"))
+local dictionary = class("Dictionary", dofile(moduleDirectory .. "collections\\Dictionary.lua"))
 dictionary.list = list
 dictionary.newInstance = dictionary
 local logger = class("Logger", dofile(moduleDirectory .. "utils\\Logger.lua"))
@@ -30,10 +30,10 @@ end
 
 function ModuleLoader:init(loggerLevel)
     self.modulePaths = dictionary()
-    self.modulePaths:add("List", moduleDirectory .. "list\\List.lua")
-    self.modulePaths:add("LinkedList", moduleDirectory .. "list\\LinkedList.lua")
-    self.modulePaths:add("Node", moduleDirectory .. "list\\Node.lua")
-    self.modulePaths:add("Dictionary", moduleDirectory .. "dictionary\\Dictionary.lua")
+    self.modulePaths:add("List", moduleDirectory .. "collections\\List.lua")
+    self.modulePaths:add("LinkedList", moduleDirectory .. "collections\\LinkedList.lua")
+    self.modulePaths:add("Node", moduleDirectory .. "collections\\Node.lua")
+    self.modulePaths:add("Dictionary", moduleDirectory .. "collections\\Dictionary.lua")
     self.modulePaths:add("Logger", moduleDirectory .. "utils\\Logger.lua")
     self.modulePaths:add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
     self.modulePaths:add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")

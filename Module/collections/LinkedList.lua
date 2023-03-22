@@ -1,5 +1,5 @@
 local linkedList = {
-    dependencies = {"Node"}
+    dependencies = {"node", "list"}
 }
 
 function linkedList:init()
@@ -214,19 +214,19 @@ function linkedList:contains(value)
     return false
 end
 
-function linkedList:toArray()
-    local array = {}
+function linkedList:toList()
+    local list = self.list()
     local current = self.head
 
     while current do
-        table.insert(array, current.value)
+        list:add(current.value)
         current = current.next
     end
 
-    return array
+    return list
 end
 
-function linkedList:fromArray(array)
+function linkedList:fromList(array)
     local newList = self.newInstance()
 
     for _, value in ipairs(array) do
@@ -264,16 +264,32 @@ function linkedList:iterator()
     end
 end
 
-function linkedList.__pairs(v)
-    return v:iterator()
+function linkedList.__pairs(self)
+    return self:iterator()
 end
 
-function linkedList.__ipairs(v)
-    return v:iterator()
+function linkedList.__ipairs(self)
+    return self:iterator()
 end
 
-function linkedList.__len(v)
-    return v:length()
+function linkedList.__len(self)
+    return self:length()
 end
+
+function linkedList.__eq(self, otherList)
+    local currentA = self.head
+    local currentB = otherList.head
+
+    while currentA and currentB do
+        if currentA.value ~= currentB.value then
+            return false
+        end
+        currentA = currentA.next
+        currentB = currentB.next
+    end
+
+    return currentA == nil and currentB == nil
+end
+
 
 return linkedList
