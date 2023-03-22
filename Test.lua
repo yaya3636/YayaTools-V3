@@ -7,57 +7,20 @@ local wrong = moduleLoader:load("listt")
 local logger = moduleLoader:load("logger")(1)
 local linkedList = moduleLoader:load("linkedList")
 
+local sheduler = moduleLoader:load("sheduler")
 
-logger:log(class.isClass(list))
-logger:log(tostring(dictionary))
-logger:log(tostring(moduleLoader:listLoggerFilteredHeaders()))
+sheduler = sheduler()
 
-moduleLoader.logger:setLevel(2)
-moduleLoader.logger:setLevel(1)
-moduleLoader.logger:setLevel(3)
-moduleLoader.logger:setLevel(4)
-moduleLoader.logger:setLevel(1)
-moduleLoader.logger:setLevel(0)
-
-
-local dic = dictionary()
-local dic2 = dictionary()
-local lst = list()
-local lst2 = list()
-local linked = linkedList()
-local linked2 = linkedList()
-logger:log(linked == linked2)
-logger:log(lst == lst2)
-logger:log(dic == dic2)
-
-
-for i = 1, 10 do
-    dic:add("Dic1-" .. i, i)
-    dic2:add("Dic2-" .. i, i)
-    lst:add("key" .. i)
-    lst2:add("key" .. i)
-    linked:insertAt(i, "key" .. i)
-    linked2:insertAt(i, "key" .. i)
-end
-
-local dic3 = dic + dic2
-local lst3 = lst + lst2
-local linked3 = linked - linked2
-
-
-logger:log(#dic)
-logger:log(#lst)
-logger:log(#linked)
-
-logger:log(linked == linked2)
-logger:log(lst == lst2)
-logger:log(dic == dic2)
-
-for k, v in pairs(linked3) do
-    logger:log(k .. "|" .. v)
-end
+sheduler:addTask("mercred", "21:30", "2:58", function() logger:log("Hello from task") end)
+sheduler:addTask("mercredi", "21:30", "2:58", function() logger:log("Hello from task") end)
+sheduler:addTask("mercredi", "21:30", "22:58", function() logger:log("Hello from task") end)
+sheduler:addTask("mercredi", "21:30", "22:58", function() logger:log("Hello from task, autodestruct") end, true)
 
 function move()
+    while true do
+        sheduler:runTasks()
+        global:delay(500)
+    end
     local table = { "Test1", "Test2", "Test3", "Test4", "Test5" }
     local dic = dictionary()
 

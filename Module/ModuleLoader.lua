@@ -37,13 +37,15 @@ function ModuleLoader:init(loggerLevel)
     :add("Logger", moduleDirectory .. "utils\\Logger.lua")
     :add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
     :add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
+    :add("Sheduler", moduleDirectory .. "time\\Sheduler.lua")
+    :add("ShedulerTask", moduleDirectory .. "time\\ShedulerTask.lua")
 
 
     self.moduleLoaded = dictionary()
     self.moduleLoaded:add("class", class)
 
     self.logger = logger(loggerLevel)
-    self.logger:filterHeader("dictionary", true)
+    self.logger:filterHeader("Dictionary", true)
 end
 
 function ModuleLoader:load(moduleName)
@@ -71,7 +73,7 @@ function ModuleLoader:resolveDependencies(classDefinition)
     if classDefinition.dependencies then
         for _, dependencyPath in ipairs(classDefinition.dependencies) do
             local dependencyClass = self:load(dependencyPath)
-            dependencies[string.lower(dependencyPath)] = dependencyClass
+            dependencies[dependencyPath] = dependencyClass
         end
     end
     return dependencies
