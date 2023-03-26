@@ -39,6 +39,10 @@ function ModuleLoader:init(loggerLevel)
     :add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
     :add("Sheduler", moduleDirectory .. "time\\Sheduler.lua")
     :add("ShedulerTask", moduleDirectory .. "time\\ShedulerTask.lua")
+    :add("PacketManager", moduleDirectory .. "packet\\PacketManager.lua")
+    :add("AStar", moduleDirectory .. "map\\AStar.lua")
+    :add("AStarNode", moduleDirectory .. "map\\AStarNode.lua")
+    :add("Json", moduleDirectory .. "utils\\Json.lua")
 
 
     self.moduleLoaded = dictionary()
@@ -91,8 +95,13 @@ function ModuleLoader:loadModuleFromFile(modulePath)
         newClass[depName] = depClass
     end
 
-    newClass.newInstance = function() return newClass() end
-    newClass = addSecondaryInit(newClass, {logger = self.logger})
+    if not classDefinition.noNewInstance then
+        newClass.newInstance = function() return newClass() end
+    end
+
+    if not classDefinition.noLogger then
+        newClass = addSecondaryInit(newClass, {logger = self.logger})
+    end
 
     return newClass
 end

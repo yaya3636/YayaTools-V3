@@ -95,4 +95,29 @@ function Logger:listFilteredHeaders()
     return self.filteredHeaders:getKeys()
 end
 
+function Logger:printTable(tab, indent, indent_char, separator, visited)
+    if tab then
+        indent = indent or 0
+        indent_char = indent_char or "  "
+        separator = separator or " : "
+        visited = visited or {}
+        local indentation = string.rep(indent_char, indent)
+
+        visited[tab] = true
+
+        for cle, valeur in pairs(tab) do
+            if type(valeur) == "table" then
+                self:log(indentation .. tostring(cle) .. separator)
+                if not visited[valeur] then
+                    self:printTable(valeur, indent + 1, indent_char, separator, visited)
+                else
+                    self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]")
+                end
+            else
+                self:log(indentation .. tostring(cle) .. separator .. tostring(valeur))
+            end
+        end
+    end
+end
+
 return Logger

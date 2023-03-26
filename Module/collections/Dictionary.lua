@@ -39,14 +39,25 @@ end
 
 -- Ajouter une paire clé-valeur
 function dictionary:add(key, value)
-    if self.logger then
-        self.logger:log(
-        "La paire clef/valeur [ " .. tostring(key) .. " | " .. tostring(value) .. " ] a été ajouté au dictionnaire",
-        "Dictionary")
+    if not self:containsKey(key) then
+        if self.logger then
+            self.logger:log(
+            "La paire clef/valeur [ " .. tostring(key) .. " | " .. tostring(value) .. " ] a été ajouté au dictionnaire",
+            "Dictionary")
+        end
+        self.data[key] = value
     end
-    self.data[key] = value
     return self
 end
+
+-- Ajouter une paire clé-valeur
+function dictionary:set(key, value)
+    if self:containsKey(key) then
+        self.data[key] = value
+    end
+    return self
+end
+
 
 -- Obtenir la valeur d'une clé
 function dictionary:get(key)
