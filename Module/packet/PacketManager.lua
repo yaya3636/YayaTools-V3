@@ -4,7 +4,6 @@ packetManager.dependencies = {"dictionary"}
 
 function packetManager:init()
     self.subscribedPacket = self.dictionary()
-    self.dump = string.dump
 end
 
 -- Enregistre un packet
@@ -22,6 +21,7 @@ end
 -- Ajoute un callback à un packet
 function packetManager:addCallback(kPacketName, vCallBack)
     local signatureFunc = string.dump(vCallBack)
+    --self.logger:log(signatureFunc)
     if not self.subscribedPacket:get(kPacketName):some(function (k)
         if tostring(k) == tostring(signatureFunc) then
             return true
@@ -49,10 +49,9 @@ end
 
 -- Souscrit à un packet
 function packetManager:subscribePacket(kPacketName, vCallBack)
-    local fn = function(msg) vCallBack(msg) end
     self:registerPacket(kPacketName)
     self:setCallbackFunction(kPacketName)
-    self:addCallback(kPacketName, fn)
+    self:addCallback(kPacketName, vCallBack)
     self:registerMessage(kPacketName)
 end
 
@@ -81,6 +80,7 @@ end
 function packetManager:subscribeMultipePackets(packetToSub)
     for kPacketName, vCallBack in pairs(packetToSub) do
         if type(vCallBack) == "function" then
+            --self.logger:log(string.dump(vCallBack))
             self:subscribePacket(kPacketName, vCallBack)
         else
             self:unsubscribePacket(kPacketName)

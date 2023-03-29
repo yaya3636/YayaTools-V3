@@ -53,7 +53,7 @@ function aStar:findPath(startMapId, endMapId)
 
     local heuristicFunc = function(currentNode, finishNode)
         local estimatedCost = map:GetPathDistance(currentNode.mapId, finishNode.mapId)
-        return math.huge
+        return estimatedCost
     end
 
     return self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
