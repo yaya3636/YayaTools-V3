@@ -151,9 +151,18 @@ function move()
             elseif targetMapId then
                 map:moveToward(tonumber(targetMapId))
             else
-                logger:log("Recherche d'une map non exploré")
-                local unexploredMapId = findUnvisitedMapId()
-                table.insert(stack, { mapId = unexploredMapId, lastDirection = "" })
+                logger:log("Recherche de la carte non explorée la plus proche")
+                local closestUnexploredMapId = getClosestUnexploredMap()
+
+                if closestUnexploredMapId then
+                    table.insert(stack, { mapId = closestUnexploredMapId, lastDirection = "" })
+                else
+                    currentState = "finished"
+                    logger:log("Exploration terminée. Toutes les cartes ont été explorées.")
+                end
+                -- logger:log("Recherche d'une map non exploré")
+                -- local unexploredMapId = findUnvisitedMapId()
+                -- table.insert(stack, { mapId = unexploredMapId, lastDirection = "" })
             end
         elseif currentState == "finished" then
             break
@@ -255,6 +264,33 @@ function convertNumberKeysToStrings(t)
     end
     return newTable
 end
+
+function getClosestUnexploredMap()
+    local closestMapId = nil
+    local minDistance = math.huge
+    local currentPos = { x = visitedMaps[currentMapId].pos.x, y = visitedMaps[currentMapId].pos.y }
+
+    for _, mapData in pairs(visitedMaps) do
+        for _, dir in ipairs(directions) do
+            if not mapData[dir].visited and not mapData[dir].isBlocked then
+                local adjacentPosX, adjacentPosY = getAdjacentCoordinates(mapData.pos.x, mapData.pos.y, dir)
+                local posKey = adjacentPosX .. "," .. adjacentPosY
+
+                if not mapPositionHashTable[posKey] then
+                    local distance = math.abs(currentPos.x - adjacentPosX) + math.abs(currentPos.y - adjacentPosY)
+
+                    if distance < minDistance then
+                        minDistance = distance
+                        closestMapId = mapData.mapId
+                    end
+                end
+            end
+        end
+    end
+
+    return closestMapId
+end
+
 
 function cleanVisited()
     local cleanedData = {}
