@@ -24,6 +24,17 @@ end
 
 logger:log("Récupération des maps exploré terminée", "DFS", 2)
 
+for k, v in pairs(visitedMaps) do
+    for _, dir in pairs(directions) do
+        if not v[dir].visited and not v[dir].isBlocked then
+            table.insert(stack, { mapId = k, lastDirection = ""})
+            goto continue
+        end
+    end
+
+end
+
+::continue::
 
 function move()
     onMapChanged()
@@ -152,6 +163,8 @@ function onMapChanged()
     end
 end
 
+
+
 function getAdjacentCoordinates(posX, posY, direction)
     if direction == "left" then
         return posX - 1, posY
@@ -230,7 +243,6 @@ function convertNumberKeysToStrings(t)
     end
     return newTable
 end
-
 
 function cleanVisited()
     local cleanedData = {}
