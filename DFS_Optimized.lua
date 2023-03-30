@@ -24,17 +24,6 @@ end
 
 logger:log("Récupération des maps exploré terminée", "DFS", 2)
 
-for k, v in pairs(visitedMaps) do
-    for _, dir in pairs(directions) do
-        if not v[dir].visited and not v[dir].isBlocked then
-            table.insert(stack, { mapId = k, lastDirection = ""})
-            goto continue
-        end
-    end
-
-end
-
-::continue::
 
 function move()
     onMapChanged()
@@ -156,14 +145,26 @@ function onMapChanged()
         if targetMapId then
             map:moveToward(tonumber(targetMapId))
         else
-            logger:log("Exploration terminée. Toutes les cartes ont été explorées.")
-            currentState = "finished"
+            logger:log("Recherche d'une map non exploré")
+            local unexploredMapId = findUnvisitedMapId()
+            table.insert(stack, { mapId = unexploredMapId, lastDirection = ""})
+            onMapChanged()
         end
     elseif currentState == "finished" then
     end
 end
 
-
+function findUnvisitedMapId()
+    for k, v in pairs(visitedMaps) do
+        for _, dir in pairs(directions) do
+            if not v[dir].visited and not v[dir].isBlocked then
+                return k
+            end
+        end
+    end
+    currentState = "finished"
+    logger:log("Exploration terminée. Toutes les cartes ont été explorées.")
+end
 
 function getAdjacentCoordinates(posX, posY, direction)
     if direction == "left" then
