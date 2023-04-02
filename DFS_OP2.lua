@@ -34,14 +34,65 @@ end
 
 logger:log("Récupération des maps exploré terminée", "DFS", 2)
 
-local function getNextDirection(mapInfo)
+local function countUnexploredDirections(mapInfo)
+    local count = 0
     for _, dir in ipairs(directions) do
         if not mapInfo[dir].visited and not mapInfo[dir].isBlocked then
-            return dir
+            count = count + 1
         end
     end
-    return nil
+    return count
 end
+
+
+local function isMapFullyExplored(mapInfo)
+    for _, dir in ipairs(directions) do
+        if not mapInfo[dir].visited and not mapInfo[dir].isBlocked then
+            return false
+        end
+    end
+    return true
+end
+-- Modifiez la fonction getNextDirection pour prioriser la finition de l'exploration des cartes visitées
+local function getNextDirection(mapInfo)
+    local bestDirection = nil
+    local bestPriority = math.huge
+
+    for _, dir in ipairs(directions) do
+        if not mapInfo[dir].visited and not mapInfo[dir].isBlocked then
+            local adjacentPosX, adjacentPosY = getAdjacentCoordinates(visitedMaps[currentMapId].pos.x,
+            visitedMaps[currentMapId].pos.y, dir)
+            local hashKey = adjacentPosX .. "," .. adjacentPosY
+            local adjacentMapId = mapPositionHashTable[hashKey]
+            if adjacentMapId then
+                --logger:log("AdjacentMapId : " .. adjacentMapId)
+
+            end
+            --logger:log("lastMapId : " .. lastMapId)
+
+            local priority = 0
+            if adjacentMapId and lastMapId == adjacentMapId then
+                priority = 1
+            elseif adjacentMapId and not isMapFullyExplored(visitedMaps[adjacentMapId]) then
+                priority = 2
+            else
+                priority = 3
+            end
+
+            if priority < bestPriority then
+                --logger:log("priority : " .. priority)
+                bestDirection = dir
+                bestPriority = priority
+            end
+        end
+    end
+
+    return bestDirection
+end
+
+
+
+
 
 local function hasUnexploredDirection(mapInfo)
     for _, dir in ipairs(directions) do
@@ -79,11 +130,20 @@ local function updateVisitedMaps()
         local hashKey = adjacentPosX .. "," .. adjacentPosY
         local visitedMapId = mapPositionHashTable[hashKey]
 
-        if visitedMapId then
-            logger:log("Adjacent mapId déterminé | mapId : " ..
-                currentMapId .. ", direction : " .. dir .. ", toMapId : " .. visitedMapId, "DFS", 2)
-            visitedMaps[currentMapId][dir].mapId = visitedMapId
-            visitedMaps[currentMapId][dir].visited = true
+        if visitedMapId and visitedMaps[visitedMapId] then
+            local oppositeDir = getOppositeDirection(dir)
+            if not visitedMaps[visitedMapId][oppositeDir].isBlocked then
+                logger:log("Adjacent mapId déterminé | mapId : " ..
+                    currentMapId .. ", direction : " .. dir .. ", toMapId : " .. visitedMapId, "DFS", 2)
+                visitedMaps[currentMapId][dir].mapId = visitedMapId
+                visitedMaps[currentMapId][dir].visited = true
+            else
+                logger:log("Adjacent mapId blocked | mapId : " ..
+                    currentMapId .. ", direction : " .. dir .. ", toMapId : " .. visitedMapId, "DFS", 2)
+                    visitedMaps[currentMapId][dir].visited = true
+                    visitedMaps[currentMapId][dir].isBlocked = true
+
+            end
         end
     end
 end
@@ -178,7 +238,6 @@ end
 function messagesRegistering()
     Packet:subscribePacket("TextInformationMessage", CB_TextInformationMessage)
     --Packet:subscribePacket("ChangeMapMessage", function() developer:suspendScriptUntil("TextInformationMessage", 100, true) end)
-
 end
 
 function CB_TextInformationMessage(msg)
@@ -192,9 +251,7 @@ function CB_TextInformationMessage(msg)
         global:finishScript()
         global:thisAccountController():startScript()
     end
-
 end
-
 
 function findUnvisitedMapId()
     for k, v in pairs(visitedMaps) do
@@ -312,7 +369,6 @@ function getClosestUnexploredMap()
 
     return closestMapId
 end
-
 
 function cleanVisited()
     local cleanedData = {}
