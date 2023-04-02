@@ -1,20 +1,21 @@
 local moduleLoader = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\ModuleLoader.lua]])(2)
-local logger = moduleLoader:load("logger")(1)
+logger = moduleLoader:load("logger")(1)
 local json = moduleLoader:load("Json")()
+Packet = moduleLoader:load("PacketManager")()
 
 logger:addHeaderColor("DFS", "#fff74d")
 
-local mapDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Data\Maps\]]
+mapDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Data\Maps\]]
 
-local directions = { "left", "right", "top", "bottom" }
-local visitedMaps = {}
-local stack = {}
-local mapPositionHashTable = {}
-local currentState = "explore"
-local countMove = 0
-local currentMapId = "0"
-local lastMapId = "0"
-local lastDirection = ""
+directions = { "left", "right", "top", "bottom" }
+visitedMaps = {}
+stack = {}
+mapPositionHashTable = {}
+currentState = "explore"
+countMove = 0
+currentMapId = "0"
+lastMapId = "0"
+lastDirection = ""
 
 local file = io.open(mapDirectory .. "visitedMaps.json", "r")
 
@@ -173,6 +174,27 @@ end
 function stopped()
     exportVisitedMaps()
 end
+
+function messagesRegistering()
+    Packet:subscribePacket("TextInformationMessage", CB_TextInformationMessage)
+    --Packet:subscribePacket("ChangeMapMessage", function() developer:suspendScriptUntil("TextInformationMessage", 100, true) end)
+
+end
+
+function CB_TextInformationMessage(msg)
+    if msg.msgId == 158 then
+        logger:warning("Zone d'alliance, impossible d'accèder a la carte suivante", "DFS")
+        lastMapId = "0"
+        visitedMaps[currentMapId][lastDirection].isBlocked = true
+        table.remove(stack, #stack)
+        --currentState = "backtrack"
+        --move()
+        global:finishScript()
+        global:thisAccountController():startScript()
+    end
+
+end
+
 
 function findUnvisitedMapId()
     for k, v in pairs(visitedMaps) do

@@ -99,26 +99,4 @@ function packetManager:sendPacket(packetName, fn)
     developer:sendMessage(msg)
 end
 
-function packetManager:compareStrings(str1, str2)
-    local len1 = #str1
-    local len2 = #str2
-
-    if len1 ~= len2 then
-      return false
-    end
-
-    for i = 1, len1 do
-        local s1 = string.sub(str1, i, i)
-        local s2 = string.sub(str2, i, i)
-      if s1 ~= s2 then
-        self.logger:log("i = " .. i)
-        self.logger:log(s1)
-        self.logger:log(s2)
-        return false
-      end
-    end
-
-    return true
-  end
-
 return packetManager
