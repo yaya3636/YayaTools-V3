@@ -1,5 +1,5 @@
 local aStar = {
-    dependencies = { "list", "dictionary", "aStarNode" }
+    dependencies = { "list", "dictionary", "aStarNode", "areas", "subAreas" }
 }
 
 function aStar:init(maps)
@@ -8,15 +8,14 @@ function aStar:init(maps)
     self.openList = self.list()
     self.closedList = self.list()
     self.excludedMapIds = self.list()
-
+    self.allMapsInfo = self.areas:getAllMapsByDFS()
     local function getNeighbourId(mapId)
-        local dir = { "LeftNeighbourId", "RightNeighbourId", "BottomNeighbourId", "TopNeighbourId" }
+        local dir = { "left", "right", "top", "bottom" }
         local neighborId = self.list()
-        local mapData = d2data:mapData(mapId)
-
+        local mapData = self.allMapsInfo:get(tostring(mapId))
         for _, v in pairs(dir) do
-            if mapData[v] ~= 0 and maps:contains(mapData[v]) then
-                neighborId:add(tonumber(mapData[v]))
+            if mapData.neighbours:get(v) ~= nil and maps:contains(mapData.neighbours:get(v)) then
+                neighborId:add(mapData.neighbours:get(v))
             end
         end
         return neighborId
@@ -28,11 +27,15 @@ function aStar:init(maps)
 end
 
 function aStar:findPath(startMapId, endMapId)
+    if startMapId and endMapId then
+        startMapId = tostring(startMapId)
+        endMapId = tostring(endMapId)
+    end
     self.openList:clear()
     self.closedList:clear()
+    self.logger:log("Finding path from " .. tostring(startMapId) .. " to " .. tostring(endMapId), "AStar")
     local startNode = self:getNodeByMapId(startMapId)
     local endNode = self:getNodeByMapId(endMapId)
-
     local neighborsFunc = function(node)
         local neighbors = self.list()
         for _, adjacentMapId in ipairs(node.adjacentMapIds) do
@@ -47,12 +50,12 @@ function aStar:findPath(startMapId, endMapId)
     end
 
     local costFunc = function(currentNode, neighborNode)
-        local cost = map:GetPathDistance(currentNode.mapId, neighborNode.mapId)
+        local cost = map:GetPathDistance(tonumber(currentNode.mapId), tonumber(neighborNode.mapId))
         return cost
     end
 
     local heuristicFunc = function(currentNode, finishNode)
-        local estimatedCost = map:GetPathDistance(currentNode.mapId, finishNode.mapId)
+        local estimatedCost = map:GetPathDistance(tonumber(currentNode.mapId), tonumber(finishNode.mapId))
         return estimatedCost
     end
 

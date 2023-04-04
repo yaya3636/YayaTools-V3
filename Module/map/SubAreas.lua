@@ -1,5 +1,6 @@
 local subAreas = {
-    dependencies = { "list", "dictionary", "json" }
+    dependencies = { "list", "dictionary", "json" },
+    singleton = true
 }
 
 function subAreas:init()
@@ -83,7 +84,7 @@ end
 
 function subAreas:getSubAreaMapsByDFS(search)
     local path = self:getSubAreaPathDFS(search)
-    self.logger:log(path, "SubAreas")
+    --self.logger:log(path, "SubAreas")
     local function sortMap(map)
         local ret = {}
         ret.mapId = map.mapId
@@ -102,10 +103,10 @@ function subAreas:getSubAreaMapsByDFS(search)
     if path then
         local subAreaDFS = self:loadSubAreaMapsDFS(path)
 
-        local maps = self.list()
+        local maps = self.dictionary()
         if subAreaDFS then
             for _, map in pairs(subAreaDFS) do
-                maps:add(sortMap(map))
+                maps:add(map.mapId ,sortMap(map))
             end
         else
             self.logger:warning("SubArea loading error " .. tostring(search), "SubAreas")

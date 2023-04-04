@@ -10,7 +10,11 @@ local json = moduleLoader:load("Json")()
 Packet = moduleLoader:load("PacketManager")
 Monsters = moduleLoader:load("Monsters")()
 Recipes = moduleLoader:load("Recipes")()
-SubAreas = moduleLoader:load("SubAreas")()
+
+Areas = moduleLoader:load("Areas")
+SubAreas = moduleLoader:load("SubAreas")
+
+AStar = moduleLoader:load("AStar")
 
 
 function GetSubAreaObject(subAreaId)
@@ -87,8 +91,25 @@ function afficheTableau(tab, indent, indent_char, separator, visited)
 end
 
 function move()
-    local area = SubAreas:getSubAreaMapsByDFS("Astrub")
-    logger:log(area)
+    -- local executionTime, result = MeasureExecutionTime(function() return Areas:getAllMapsByDFS() end)
+    -- --logger:log(result)
+    -- logger:log("Execution time: " .. executionTime .. " seconds")
+    local listMap = SubAreas:getSubAreaMapsByDFS(97)
+    local listMapAstar = list()
+    for _, v in pairs(listMap) do
+        listMapAstar:add(v.mapId)
+    end
+    --logger:log(listMapAstar)
+    local astar = AStar(listMapAstar)
+
+    for i = 1, 10 do
+        local path = astar:findPath(189661705, 189531654)
+        logger:log(path)
+    end
+    --local area = Areas:getAllMapsByDFS("Astrub")
+    --logger:log(area)
+    -- local area = SubAreas:getSubAreaMapsByDFS("Astrub")
+    -- logger:log(area)
     --logger:log(SubAreas:getSubAreaMapsByDFS(200000))
 
     --logger:log(Recipes:getRecipesObject(159))
@@ -102,4 +123,13 @@ end
 
 function stopped()
     logger:log("Func stopped")
+end
+
+function MeasureExecutionTime(functionToExecute, ...)
+    local startTime = os.clock()
+    local results = {functionToExecute(...)}
+    local endTime = os.clock()
+    local executionTime = endTime - startTime
+
+    return executionTime, unpack(results)
 end
