@@ -73,7 +73,7 @@ end
 
 function subAreas:loadSubAreaMapsDFS(path)
     if path then
-        local file = io.open(path, "r")
+        local file = io.open(self.pathSubAreas .. "\\" .. path, "r")
         local content = file:read("*all")
         file:close()
         return self.json:decode(content)
@@ -83,8 +83,35 @@ end
 
 function subAreas:getSubAreaMapsByDFS(search)
     local path = self:getSubAreaPathDFS(search)
+    self.logger:log(path, "SubAreas")
+    local function sortMap(map)
+        local ret = {}
+        ret.mapId = map.mapId
+        ret.area = map.area
+        ret.subArea = map.subArea
+        ret.areaId = map.areaId
+        ret.subAreaId = map.subAreaId
+        ret.neighbours = self.dictionary()
+        for _, dir in pairs({"left", "right", "top", "bottom"}) do
+            if map[dir] ~= nil then
+                ret.neighbours:add(dir, map[dir].mapId)
+            end
+        end
+        return ret
+    end
     if path then
-        return self:loadSubAreaMapsDFS(path)
+        local subAreaDFS = self:loadSubAreaMapsDFS(path)
+
+        local maps = self.list()
+        if subAreaDFS then
+            for _, map in pairs(subAreaDFS) do
+                maps:add(sortMap(map))
+            end
+        else
+            self.logger:warning("SubArea loading error " .. tostring(search), "SubAreas")
+        end
+
+        return maps
     else
         self.logger:warning("SubArea not found: " .. tostring(search), "SubAreas")
     end

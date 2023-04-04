@@ -23,6 +23,8 @@ lastMapId = "0"
 lastDirection = ""
 stuckMap = {}
 local currentZone = SubAreas:getSubAreaObjectByName(map:currentSubArea()).id
+local currentAreaId = Areas:getAreaObjectByName(map:currentArea()).id
+
 
 local file = io.open(mapDirectory .. "visitedMaps.json", "r")
 
@@ -217,15 +219,19 @@ function move()
                     stack = {}
                     stuckCounter = 0
                 else
-                    --logger:log("targetMapId = " .. targetMapId)
+                    logger:log("targetMapId = " .. targetMapId)
                     map:moveToward(tonumber(targetMapId))
                 end
             else
                 logger:log("Recherche de la carte non explorée la plus proche")
-                local closestUnexploredMapId = getClosestUnexploredMap()
+                local closestUnexploredMapId = getUnexploredMapIdInSubArea(currentZone)
+                if closestUnexploredMapId == nil then
+                    logger:log("Impossible de trouver une carte non explorée proche dans la sous zone, recherche d'une carte non explorée aléatoire dans la zone")
+                    closestUnexploredMapId = getUnexploredMapIdInArea(Areas:getAreaObjectByName(map:currentArea()).id)
+                end
                 if closestUnexploredMapId == nil then
                     logger:log("Impossible de trouver une carte non explorée proche dans la zone, recherche d'une carte non explorée aléatoire dans la zone")
-                    closestUnexploredMapId = getUnexploredMapInZone(currentZone)
+                    closestUnexploredMapId = getClosestUnexploredMap()
                 end
                 if closestUnexploredMapId == nil then
                     logger:log("Impossible de trouver une carte non explorée dans la zone, recherche d'une carte non explorée aléatoire")
@@ -254,7 +260,7 @@ end
 
 -- Area
 
-function getUnexploredMapInZone(id)
+function getUnexploredMapIdInSubArea(id)
     for mapId, mapInfo in pairs(visitedMaps) do
         if mapInfo.subAreaId == id and hasUnexploredDirection(mapInfo) then
             return mapInfo.mapId
@@ -347,6 +353,14 @@ function getClosestUnexploredMap()
     end
     --logger:log("closest = " .. closestMapId)
     return closestMapId
+end
+
+function getUnexploredMapIdInArea(id)
+    for mapId, mapInfo in pairs(visitedMaps) do
+        if mapInfo.areaId == id and hasUnexploredDirection(mapInfo) then
+            return mapInfo.mapId
+        end
+    end
 end
 
 -- Direction | coord

@@ -10,8 +10,7 @@ local json = moduleLoader:load("Json")()
 Packet = moduleLoader:load("PacketManager")
 Monsters = moduleLoader:load("Monsters")()
 Recipes = moduleLoader:load("Recipes")()
-
---logger:log(Recipes)
+SubAreas = moduleLoader:load("SubAreas")()
 
 
 function GetSubAreaObject(subAreaId)
@@ -88,7 +87,11 @@ function afficheTableau(tab, indent, indent_char, separator, visited)
 end
 
 function move()
-    logger:log(Recipes:getRecipesObject(159))
+    local area = SubAreas:getSubAreaMapsByDFS("Astrub")
+    logger:log(area)
+    --logger:log(SubAreas:getSubAreaMapsByDFS(200000))
+
+    --logger:log(Recipes:getRecipesObject(159))
 
 
 end
