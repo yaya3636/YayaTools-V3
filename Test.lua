@@ -94,18 +94,32 @@ function move()
     -- local executionTime, result = MeasureExecutionTime(function() return Areas:getAllMapsByDFS() end)
     -- --logger:log(result)
     -- logger:log("Execution time: " .. executionTime .. " seconds")
-    local listMap = SubAreas:getSubAreaMapsByDFS(97)
-    local listMapAstar = list()
-    for _, v in pairs(listMap) do
-        listMapAstar:add(v.mapId)
-    end
-    --logger:log(listMapAstar)
-    local astar = AStar(listMapAstar)
 
-    for i = 1, 10 do
-        local path = astar:findPath(189661705, 189531654)
-        logger:log(path)
+    local allMap = Areas:getAllMapsByDFS()
+
+    local err = list()
+    for _, v in pairs(allMap) do
+        for _, v2 in pairs(v.neighbours) do
+            if v2 == v.mapId then
+                err:add(v)
+            end
+        end
     end
+
+    logger:log(err)
+
+    -- local listMap = SubAreas:getSubAreaMapsByDFS(97)
+    -- local listMapAstar = list()
+    -- for _, v in pairs(listMap) do
+    --     listMapAstar:add(v.mapId)
+    -- end
+    -- --logger:log(listMapAstar)
+    -- local astar = AStar(listMapAstar)
+
+    -- for i = 1, 10 do
+    --     local path = astar:findPath(189530112, 189532417)
+    --     logger:log(path)
+    -- end
     --local area = Areas:getAllMapsByDFS("Astrub")
     --logger:log(area)
     -- local area = SubAreas:getSubAreaMapsByDFS("Astrub")

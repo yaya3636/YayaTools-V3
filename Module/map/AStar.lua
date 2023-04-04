@@ -8,6 +8,7 @@ function aStar:init(maps)
     self.openList = self.list()
     self.closedList = self.list()
     self.excludedMapIds = self.list()
+    self.relaxList = self.list()
     self.allMapsInfo = self.areas:getAllMapsByDFS()
     local function getNeighbourId(mapId)
         local dir = { "left", "right", "top", "bottom" }
@@ -30,12 +31,15 @@ function aStar:findPath(startMapId, endMapId)
     if startMapId and endMapId then
         startMapId = tostring(startMapId)
         endMapId = tostring(endMapId)
+        self.startMapId = tostring(startMapId)
+        self.endMapId = tostring(endMapId)
     end
     self.openList:clear()
     self.closedList:clear()
     self.logger:log("Finding path from " .. tostring(startMapId) .. " to " .. tostring(endMapId), "AStar")
     local startNode = self:getNodeByMapId(startMapId)
     local endNode = self:getNodeByMapId(endMapId)
+
     local neighborsFunc = function(node)
         local neighbors = self.list()
         for _, adjacentMapId in ipairs(node.adjacentMapIds) do
@@ -44,22 +48,30 @@ function aStar:findPath(startMapId, endMapId)
                 if adjacentNode then
                     neighbors:add(adjacentNode)
                 end
+            else
+                --self.logger:log("Excluding map " .. tostring(adjacentMapId), "AStar")
             end
         end
         return neighbors
     end
 
     local costFunc = function(currentNode, neighborNode)
-        local cost = map:GetPathDistance(tonumber(currentNode.mapId), tonumber(neighborNode.mapId))
-        return cost
+        --local cost = map:GetPathDistance(tonumber(currentNode.mapId), tonumber(neighborNode.mapId))
+        return 1
     end
 
     local heuristicFunc = function(currentNode, finishNode)
-        local estimatedCost = map:GetPathDistance(tonumber(currentNode.mapId), tonumber(finishNode.mapId))
+        local estimatedCost = map:GetDistance(tonumber(currentNode.mapId), tonumber(finishNode.mapId))
         return estimatedCost
     end
 
-    return self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
+    local path = self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
+    if not path then
+        self:relax()
+        path = self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
+    end
+
+    return path
 end
 
 function aStar:getNodeByMapId(mapId)
@@ -143,5 +155,35 @@ function aStar:reconstructPath(node)
     self.excludedMapIds:reverse():remove(#self.excludedMapIds)
     return path:reverse() -- Inverse la liste pour avoir les mapId dans le bon ordre
 end
+
+
+function aStar:relax()
+    self.logger:log("Relaxing path", "AStar")
+
+    if self.relaxList:isEmpty() then
+        self.relaxList:add(self.startMapId)
+        self.relaxList:add(self.endMapId)
+    end
+
+    local newRelaxList = self.list()
+
+    for _, mapId in ipairs(self.relaxList) do
+        local currentNode = self:getNodeByMapId(mapId)
+
+        if currentNode then
+            for _, adjacentMapId in ipairs(currentNode.adjacentMapIds) do
+                if self.excludedMapIds:contains(adjacentMapId) then
+                    self.excludedMapIds:removeValue(adjacentMapId)
+                    newRelaxList:add(adjacentMapId)
+                end
+            end
+        end
+    end
+
+    self.relaxList = newRelaxList
+    self.logger:log("length of excludedMapIds: " .. #self.excludedMapIds, "AStar")
+end
+
+
 
 return aStar

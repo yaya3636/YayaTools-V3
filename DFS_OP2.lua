@@ -2,8 +2,8 @@ local moduleLoader = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Modul
 logger = moduleLoader:load("logger")(1)
 local json = moduleLoader:load("Json")()
 Packet = moduleLoader:load("PacketManager")
-Areas = moduleLoader:load("Areas")()
-SubAreas = moduleLoader:load("SubAreas")()
+Areas = moduleLoader:load("Areas")
+SubAreas = moduleLoader:load("SubAreas")
 --local ar = Areas:getAreaObjectByName("Amakna")
 --local sb = SubAreas:getSubAreaObjectByName("Port de Madrestam")
 --logger:printTable(ar)
@@ -156,7 +156,7 @@ function move()
         local currentMapInfo = visitedMaps[currentMapId]
 
         if currentState == "explore" then
-            if lastMapId ~= "0" then
+            if lastMapId ~= "0" and lastMapId ~= currentMapId then
                 visitedMaps[lastMapId][lastDirection].mapId = currentMapId
             end
 
@@ -176,6 +176,7 @@ function move()
                 end
             else
                 currentState = "backtrack"
+                lastMapId = "0"
             end
         elseif currentState == "backtrack" then
             local targetMapId = nil
