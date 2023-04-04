@@ -36,7 +36,7 @@ function aStar:findPath(startMapId, endMapId)
     end
     self.openList:clear()
     self.closedList:clear()
-    self.logger:log("Finding path from " .. tostring(startMapId) .. " to " .. tostring(endMapId), "AStar")
+    self.logger:log("Finding path from " .. tostring(startMapId) .. " to " .. tostring(endMapId), "AStar", 2)
     local startNode = self:getNodeByMapId(startMapId)
     local endNode = self:getNodeByMapId(endMapId)
 
@@ -68,7 +68,7 @@ function aStar:findPath(startMapId, endMapId)
     local path = self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
     if not path then
         self:relax()
-        path = self:_findPath(startNode, endNode, neighborsFunc, costFunc, heuristicFunc)
+        path = self:findPath(startMapId, endMapId)
     end
 
     return path
@@ -158,7 +158,7 @@ end
 
 
 function aStar:relax()
-    self.logger:log("Relaxing path", "AStar")
+    self.logger:log("Relaxing path", "AStar", 2)
 
     if self.relaxList:isEmpty() then
         self.relaxList:add(self.startMapId)
@@ -171,6 +171,10 @@ function aStar:relax()
         local currentNode = self:getNodeByMapId(mapId)
 
         if currentNode then
+            if self.excludedMapIds:contains(currentNode.mapId) then
+                self.excludedMapIds:removeValue(currentNode.mapId)
+                newRelaxList:add(currentNode.mapId)
+            end
             for _, adjacentMapId in ipairs(currentNode.adjacentMapIds) do
                 if self.excludedMapIds:contains(adjacentMapId) then
                     self.excludedMapIds:removeValue(adjacentMapId)
@@ -181,7 +185,10 @@ function aStar:relax()
     end
 
     self.relaxList = newRelaxList
-    self.logger:log("length of excludedMapIds: " .. #self.excludedMapIds, "AStar")
+    if #self.excludedMapIds == 0 then
+        self.logger:log("No more map to relax", "AStar", 2)
+    end
+    --self.logger:log("length of excludedMapIds: " .. #self.excludedMapIds, "AStar")
 end
 
 

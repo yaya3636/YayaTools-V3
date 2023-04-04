@@ -106,20 +106,22 @@ function move()
         end
     end
 
-    logger:log(err)
 
-    -- local listMap = SubAreas:getSubAreaMapsByDFS(97)
-    -- local listMapAstar = list()
-    -- for _, v in pairs(listMap) do
-    --     listMapAstar:add(v.mapId)
-    -- end
-    -- --logger:log(listMapAstar)
-    -- local astar = AStar(listMapAstar)
+    local listMap = Areas:getAreaMapsByDFS(18)
+    local listMapAstar = list()
+    for _, v in pairs(listMap) do
+        listMapAstar:add(v.mapId)
+    end
+    --logger:log(listMapAstar)
+    local astar = AStar(listMapAstar)
 
-    -- for i = 1, 10 do
-    --     local path = astar:findPath(189530112, 189532417)
-    --     logger:log(path)
-    -- end
+    for i = 1, 10 do
+        local path = astar:findPath(193331714, 120064003)
+        logger:log(path)
+    end
+
+    logger:log("Nombre d'erreur: " .. #err)
+
     --local area = Areas:getAllMapsByDFS("Astrub")
     --logger:log(area)
     -- local area = SubAreas:getSubAreaMapsByDFS("Astrub")
