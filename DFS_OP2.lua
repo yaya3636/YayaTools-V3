@@ -223,7 +223,14 @@ function move()
             else
                 logger:log("Recherche de la carte non explorée la plus proche")
                 local closestUnexploredMapId = getClosestUnexploredMap()
-
+                if closestUnexploredMapId == nil then
+                    logger:log("Impossible de trouver une carte non explorée proche dans la zone, recherche d'une carte non explorée aléatoire dans la zone")
+                    closestUnexploredMapId = getUnexploredMapInZone(currentZone)
+                end
+                if closestUnexploredMapId == nil then
+                    logger:log("Impossible de trouver une carte non explorée dans la zone, recherche d'une carte non explorée aléatoire")
+                    closestUnexploredMapId = findUnvisitedMapId()
+                end
                 if closestUnexploredMapId then
                     table.insert(stack, { mapId = closestUnexploredMapId, lastDirection = "" })
                 else
@@ -320,6 +327,7 @@ function getClosestUnexploredMap()
                         end
                     end
                 end
+                --logger:log("Ici")
             else
                 if not mapData[dir].visited and not mapData[dir].isBlocked and not contains(stuckMap, mapData.mapId) then
                     local adjacentPosX, adjacentPosY = getAdjacentCoordinates(mapData.pos.x, mapData.pos.y, dir)
@@ -337,7 +345,7 @@ function getClosestUnexploredMap()
             end
         end
     end
-    logger:log("closest = " .. closestMapId)
+    --logger:log("closest = " .. closestMapId)
     return closestMapId
 end
 
