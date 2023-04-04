@@ -30,21 +30,12 @@ function dictionary:fromTableItems(tbl)
 end
 
 function dictionary:init()
-    if self.logger then
-        self.logger = dofile(global:getCurrentDirectory() .. [[\YayaToolsV3\Module\utils\Logger.lua]])(self.loggerLevel)
-    end
-
     self.data = {}
 end
 
 -- Ajouter une paire clé-valeur
 function dictionary:add(key, value)
     if not self:containsKey(key) then
-        if self.logger then
-            self.logger:log(
-            "La paire clef/valeur [ " .. tostring(key) .. " | " .. tostring(value) .. " ] a été ajouté au dictionnaire",
-            "Dictionary")
-        end
         self.data[key] = value
     end
     return self
@@ -62,9 +53,6 @@ end
 -- Obtenir la valeur d'une clé
 function dictionary:get(key)
     if self.logger then
-        if self.data[key] == nil then
-            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (get)", "Dictionary")
-        end
     end
     return self.data[key]
 end
@@ -108,19 +96,11 @@ function dictionary:getKey(value)
             return k
         end
     end
-    if self.logger then
-        self.logger:log("La valeur [ " .. tostring(value) .. " ] n'a pas été trouvé. (getKey)", "Dictionary")
-    end
     return nil
 end
 
 -- Supprimer une clé et sa valeur associée
 function dictionary:remove(key)
-    if self.logger then
-        if self.data[key] == nil then
-            self.logger:log("La clef [ " .. tostring(key) .. " ] n'éxiste pas. (Remove)", "Dictionary")
-        end
-    end
     self.data[key] = nil
     return self
 end

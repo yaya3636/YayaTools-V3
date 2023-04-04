@@ -1,5 +1,5 @@
 local Logger = {
-    dependencies = {"dictionary", "list"}
+    dependencies = { "dictionary", "list" }
 }
 
 function Logger:init(level, showTimestamp)
@@ -26,21 +26,49 @@ function Logger:getTimestamp()
 end
 
 function Logger:log(message, header, level)
-    message = tostring(message)
-    level = level or self.levels:get("DEBUG")
-    if level >= self.level then
-        local levelName = self.levels:getKey(level) or "DEBUG"
-        local color = self.colors:get(levelName) or self.colors:get("DEBUG")
-        if header and not self:isHeaderFiltered(header:upper()) then
-            color = self.colors:get(header:upper()) or self.colors:get(levelName)
-            message = "[" .. header .. "] " .. message
-        end
-        local timestamp = self.showTimestamp and self:getTimestamp() or ""
-        global:printColor(color, timestamp .. "[" .. levelName .. "] " .. message)
-        if level == self.levels:get("ERROR") then
-            global:finishScript()
+    header = header or ""
+    if message == nil then
+        self:log("Le message est nil", "Logger;" .. header, level)
+    elseif type(message) == "table" then
+        self:log("Le message et une table, affichage de la table...", "Logger;" .. header, 2)
+        self:printTable(message)
+    elseif type(message) == "string" then
+        message = message or "nil"
+        message = tostring(message)
+        level = level or self.levels:get("DEBUG")
+
+        if level >= self.level then
+            local levelName = self.levels:getKey(level) or "DEBUG"
+            local color = self.colors:get(levelName) or self.colors:get("DEBUG")
+            local headers = {}
+
+            if header then
+                headers = self:splitHeaders(header)
+            end
+
+            for _, h in ipairs(headers) do
+                if not self:isHeaderFiltered(h:upper()) then
+                    color = self.colors:get(h:upper()) or self.colors:get(levelName)
+                    message = "[" .. h .. "] " .. message
+                end
+            end
+
+            local timestamp = self.showTimestamp and self:getTimestamp() or ""
+            global:printColor(color, timestamp .. "[" .. levelName .. "] " .. message)
+
+            if level == self.levels:get("ERROR") then
+                global:finishScript()
+            end
         end
     end
+end
+
+function Logger:splitHeaders(headerString)
+    local headers = self.list()
+    for header in string.gmatch(headerString, '([^;]+)') do
+        headers:add(header)
+    end
+    return headers:reverse()
 end
 
 function Logger:debug(message, header)
@@ -75,7 +103,6 @@ function Logger:filterHeader(header, filter)
 end
 
 function Logger:setLevel(level)
-
     for k, v in pairs(self.levels) do
         if v == level then
             self:info("Niveau de log défini sur : " .. k, "Logger")
@@ -84,7 +111,6 @@ function Logger:setLevel(level)
         end
     end
     self:warning("Niveau de log invalide : " .. level, "Logger")
-
 end
 
 function Logger:isHeaderFiltered(header)
@@ -95,29 +121,75 @@ function Logger:listFilteredHeaders()
     return self.filteredHeaders:getKeys()
 end
 
-function Logger:printTable(tab, indent, indent_char, separator, visited)
+function Logger:printTable(tab, indent, indent_char, separator, visited, header)
     if tab then
         indent = indent or 0
         indent_char = indent_char or "  "
         separator = separator or " : "
         visited = visited or {}
         local indentation = string.rep(indent_char, indent)
-
         visited[tab] = true
 
         for cle, valeur in pairs(tab) do
+            local currentHeader = header or ""
             if type(valeur) == "table" then
-                self:log(indentation .. tostring(cle) .. separator)
-                if not visited[valeur] then
-                    self:printTable(valeur, indent + 1, indent_char, separator, visited)
+                if valeur.className then
+                    currentHeader = "ValueOf" .. valeur.className
                 else
-                    self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]")
+                    currentHeader = tab.className or currentHeader
+                end
+                self:log(indentation .. tostring(cle) .. separator, currentHeader)
+                if not visited[valeur] then
+                    self:printTable(valeur, indent + 1, indent_char, separator, visited, currentHeader)
+                else
+                    if valeur.className then
+                        valeur = "Class " .. valeur.className
+                    end
+                    self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]", currentHeader)
                 end
             else
-                self:log(indentation .. tostring(cle) .. separator .. tostring(valeur))
+                if tab.className then
+                    currentHeader = "ValueOf" .. tab.className
+                end
+                self:log(indentation .. tostring(cle) .. separator .. tostring(valeur), currentHeader)
             end
         end
     end
 end
+
+
+-- function Logger:printTable(tab, indent, indent_char, separator, visited, header)
+--     if tab and type(tab) == "table" then
+--         indent = indent or 0
+--         indent_char = indent_char or "  "
+--         separator = separator or " : "
+--         visited = visited or {}
+--         local indentation = string.rep(indent_char, indent)
+--         visited[tab] = true
+
+--         for cle, valeur in pairs(tab) do
+--             local currentHeader = header or ""
+--             if type(valeur) == "table" then
+--                 currentHeader = valeur.className or currentHeader
+--                 self:log(indentation .. tostring(cle) .. separator, currentHeader)
+--                 if not visited[valeur] then
+--                     self:printTable(valeur, indent + 1, indent_char, separator, visited, currentHeader)
+--                 else
+--                     if valeur.className then
+--                         valeur = "Class " .. valeur.className
+--                     end
+--                     self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]", currentHeader)
+--                 end
+--             else
+--                 if tab.className then
+--                     currentHeader = "ValueOf" .. tab.className
+--                 end
+--                 self:log(indentation .. tostring(cle) .. separator .. tostring(valeur), currentHeader)
+--             end
+--         end
+--     else
+--         self:warning("Le message n'est pas une table", "Logger")
+--     end
+-- end
 
 return Logger

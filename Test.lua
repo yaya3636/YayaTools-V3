@@ -7,6 +7,12 @@ local wrong = moduleLoader:load("listt")
 local logger = moduleLoader:load("logger")(1)
 local linkedList = moduleLoader:load("linkedList")
 local json = moduleLoader:load("Json")()
+Packet = moduleLoader:load("PacketManager")
+Monsters = moduleLoader:load("Monsters")()
+Recipes = moduleLoader:load("Recipes")()
+
+--logger:log(Recipes)
+
 
 function GetSubAreaObject(subAreaId)
     local subArea = d2data:objectFromD2O("SubAreas", subAreaId).Fields
@@ -82,18 +88,8 @@ function afficheTableau(tab, indent, indent_char, separator, visited)
 end
 
 function move()
-    local mapData = GetAreaMapId(0)
-    --afficheTableau(mapData)
-    local aStar = moduleLoader:load("aStar")(mapData)
-    logger:log(#aStar.nodes)
-    --afficheTableau(aStar.nodes)
-    for i = 0, 10 do
-        local startMapId, endMapId = mapData:random(), mapData:random()
+    logger:log(Recipes:getRecipesObject(159))
 
-        logger:log("-----------------------------------------")
-        afficheTableau(aStar:findPath(startMapId, endMapId))
-        logger:log("-----------------------------------------")
-    end
 
 end
 

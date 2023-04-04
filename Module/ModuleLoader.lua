@@ -3,11 +3,15 @@ local class = dofile(moduleDirectory .. "Class.lua")
 
 local list = class("List", dofile(moduleDirectory .. "collections\\List.lua"))
 list.newInstance = list
+
 local dictionary = class("Dictionary", dofile(moduleDirectory .. "collections\\Dictionary.lua"))
 dictionary.list = list
 dictionary.newInstance = dictionary
+
 local logger = class("Logger", dofile(moduleDirectory .. "utils\\Logger.lua"))
 logger.dictionary = dictionary
+logger.list = list
+logger.class = class
 logger.newInstance = logger
 
 local ModuleLoader = class('ModuleLoader')
@@ -29,6 +33,7 @@ local function addSecondaryInit(c, attributes)
 end
 
 function ModuleLoader:init(loggerLevel)
+    self.singletonInstances = dictionary()
     self.modulePaths = dictionary()
     self.modulePaths:add("List", moduleDirectory .. "collections\\List.lua")
     :add("LinkedList", moduleDirectory .. "collections\\LinkedList.lua")
@@ -43,6 +48,10 @@ function ModuleLoader:init(loggerLevel)
     :add("AStar", moduleDirectory .. "map\\AStar.lua")
     :add("AStarNode", moduleDirectory .. "map\\AStarNode.lua")
     :add("Json", moduleDirectory .. "utils\\Json.lua")
+    :add("Areas", moduleDirectory .. "map\\Areas.lua")
+    :add("SubAreas", moduleDirectory .. "map\\SubAreas.lua")
+    :add("Monsters", moduleDirectory .. "monsters\\Monsters.lua")
+    :add("Recipes", moduleDirectory .. "recipes\\Recipes.lua")
 
 
     self.moduleLoaded = dictionary()
@@ -65,11 +74,25 @@ function ModuleLoader:load(moduleName)
                 return
             end
         end)
+        if newClass == nil then
+            self.logger:log("Le module [" .. moduleName .. "] n'éxiste pas vérifié l'hortographe !", "ModuleLoader;Fonction (load)", 3)
+        else
+            self.moduleLoaded:set("class", class)
+            self:updateClassDependency()
+        end
     end
-    if newClass == nil then
-        self.logger:log("Le module [" .. moduleName .. "] n'éxiste pas vérifié l'hortographe !", "ModuleLoader", 3)
+    if newClass and newClass.singleton then
+        return self:getSingletonInstance(moduleName, newClass)
     end
     return newClass
+end
+
+function ModuleLoader:updateClassDependency()
+    for moduleName, module in pairs(self.moduleLoaded) do
+        if module.class then
+            module.class = class
+        end
+    end
 end
 
 function ModuleLoader:resolveDependencies(classDefinition)
@@ -81,6 +104,14 @@ function ModuleLoader:resolveDependencies(classDefinition)
         end
     end
     return dependencies
+end
+
+function ModuleLoader:getSingletonInstance(moduleName, classDefinition)
+    if not self.singletonInstances:containsKey(moduleName) then
+        local instance = classDefinition()
+        self.singletonInstances:add(moduleName, instance)
+    end
+    return self.singletonInstances:get(moduleName)
 end
 
 function ModuleLoader:loadModuleFromFile(modulePath)

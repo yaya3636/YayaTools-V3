@@ -1,6 +1,8 @@
 DEVELOPER_MULTI_THREADING = true
-local packetManager = {}
-packetManager.dependencies = {"dictionary"}
+local packetManager = {
+    singleton = true,
+    dependencies = {"dictionary"}
+}
 
 function packetManager:init()
     self.subscribedPacket = self.dictionary()
