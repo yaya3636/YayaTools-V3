@@ -21,6 +21,7 @@ countMove = 0
 currentMapId = "0"
 lastMapId = "0"
 lastDirection = ""
+backupMoveCount = 0
 stuckMap = {}
 local currentZone = SubAreas:getSubAreaObjectByName(map:currentSubArea()).id
 local currentAreaId = Areas:getAreaObjectByName(map:currentArea()).id
@@ -134,9 +135,16 @@ function move()
     local actualSubAreaId = SubAreas:getSubAreaObjectByName(map:currentSubArea()).id
     currentMapId = tostring(map:currentMapId())
     countMove = countMove + 1
+    backupMoveCount = backupMoveCount + 1
+
     if countMove >= 15 then
         countMove = 0
         exportVisitedMaps()
+    end
+
+    if backupMoveCount >= 30 then
+        backupMoveCount = 0
+        createBackup()
     end
 
     local stuckCounter = 0
@@ -257,6 +265,7 @@ end
 
 function stopped()
     exportVisitedMaps()
+    global:disconnect()
 end
 
 -- Area
@@ -436,7 +445,9 @@ function exportVisitedMaps()
 
     local visitedFile = io.open(mapDirectory .. "visitedMaps.json", "w")
     local encoded = json:encode(convertNumberKeysToStrings(visitedMaps))
-    visitedFile:write(encoded)
+    if encoded ~= nil then
+        visitedFile:write(encoded)
+    end
     visitedFile:close()
     -- Sort
     for _, mapInfo in pairs(cleanVisited()) do
@@ -469,6 +480,32 @@ function exportVisitedMaps()
         f:write(json:encode(maps))
         f:close()
     end
+end
+
+function createBackup()
+    local function getFormattedDateTime()
+        local currentTime = os.date("*t")
+        local day = string.format("%02d", currentTime.day)
+        local month = string.format("%02d", currentTime.month)
+        local hour = string.format("%02d", currentTime.hour)
+        local minute = string.format("%02d", currentTime.min)
+
+        return string.format("[%s_%s][%s-%s]", day, month, hour, minute)
+    end
+
+    local backupFileName = getFormattedDateTime() .. "visitedMaps" .. ".json"
+    local backupFilePath = mapDirectory .. "backups\\" .. backupFileName
+
+    logger:log("Création d'une sauvegarde des maps: " .. backupFileName, "DFS", 3)
+
+    local visitedFile = io.open(backupFilePath, "w")
+
+    local encoded = json:encode(convertNumberKeysToStrings(visitedMaps))
+
+    if encoded ~= nil then
+        visitedFile:write(encoded)
+    end
+    visitedFile:close()
 end
 
 function convertNumberKeysToStrings(t)
