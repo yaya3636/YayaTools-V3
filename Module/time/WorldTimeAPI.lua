@@ -20,9 +20,23 @@ function worldTimeAPI:requestAPI()
     return self.json:decode(developer:getRequest("https://worldtimeapi.org/api/ip/"))
 end
 
-function worldTimeAPI:getTime()
+function worldTimeAPI:getTime(format)
     local req = self:requestAPI()
     local actualTime = self:convertUnix(req.unixtime, req.utc_offset)
+    if format then
+        local hours, minutes, seconds = string.match(actualTime, "(%d+):(%d+):(%d+)")
+        local result = {}
+        for component in format:gmatch("%a") do
+            if component == "h" then
+                result.hour = tonumber(hours)
+            elseif component == "m" then
+                result.minute = tonumber(minutes)
+            elseif component == "s" then
+                result.second = tonumber(seconds)
+            end
+        end
+        return result
+    end
     return actualTime
 end
 
