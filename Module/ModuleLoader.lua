@@ -1,4 +1,4 @@
-local moduleDirectory = global:getCurrentDirectory() .. [[\YayaToolsV3\Module\]]
+local moduleDirectory = global:getCurrentDirectory() .. [[Sandbox\YayaToolsV3\Module\]]
 local class = dofile(moduleDirectory .. "Class.lua")
 
 local list = class("List", dofile(moduleDirectory .. "collections\\List.lua"))
@@ -40,14 +40,15 @@ function ModuleLoader:init(loggerLevel)
     :add("Node", moduleDirectory .. "collections\\Node.lua")
     :add("Dictionary", moduleDirectory .. "collections\\Dictionary.lua")
     :add("Logger", moduleDirectory .. "utils\\Logger.lua")
+    :add("Json", moduleDirectory .. "utils\\Json.lua")
     :add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
     :add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
     :add("Sheduler", moduleDirectory .. "time\\Sheduler.lua")
     :add("ShedulerTask", moduleDirectory .. "time\\ShedulerTask.lua")
+    :add("WorldTimeAPI", moduleDirectory .. "time\\WorldTimeAPI.lua")
     :add("PacketManager", moduleDirectory .. "packet\\PacketManager.lua")
     :add("AStar", moduleDirectory .. "map\\AStar.lua")
     :add("AStarNode", moduleDirectory .. "map\\AStarNode.lua")
-    :add("Json", moduleDirectory .. "utils\\Json.lua")
     :add("Areas", moduleDirectory .. "map\\Areas.lua")
     :add("SubAreas", moduleDirectory .. "map\\SubAreas.lua")
     :add("Monsters", moduleDirectory .. "monsters\\Monsters.lua")
