@@ -1,20 +1,21 @@
 local scheduler = {
-    dependencies = {"shedulerTask", "list", "dictionary"}
+    dependencies = {"shedulerTask", "worldTimeAPI", "list", "dictionary"}
 }
 
 function scheduler:init()
     self.tasks = self.dictionary()
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=2})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=3})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=4})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=5})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=6})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=7})), self.list())
-    :add(os.date("%A", os.time({year=os.date("*t").year, month=1, day=1})), self.list())
+    :add("lundi", self.list())
+    :add("mardi", self.list())
+    :add("mercredi", self.list())
+    :add("jeudi", self.list())
+    :add("vendredi", self.list())
+    :add("samedi", self.list())
+    :add("dimanche", self.list())
 end
 
 local function timeToMinutes(timeStr)
     local hours, minutes = timeStr:match("(%d%d):(%d%d)")
+    
     return tonumber(hours) * 60 + tonumber(minutes)
 end
 
@@ -46,17 +47,20 @@ function scheduler:addTask(day, startTime, endTime, callback, autoDestroy)
 
     local newTask = self.shedulerTask(startTimeMinutes, endTimeMinutes, callback, autoDestroy)
     self.tasks:get(day):add(newTask)
+    self.logger:info("La tâche a bien été ajouté !", "Sheduler")
 end
 
 function scheduler:runTasks()
-    local day = os.date("%A")
-    local currentTime = os.time()
-    local currentTimeStr = os.date("%H:%M", currentTime)
-    local currentTimeMinutes = timeToMinutes(currentTimeStr)
+    local day = string.lower(self.worldTimeAPI:getDay())
+    --self.logger:log(day)
+    local currentTime = self.worldTimeAPI:getTime("h,m")
+    --self.logger:log(currentTime)
+    local currentTimeMinutes = timeToMinutes(currentTime.hour .. ":" .. currentTime.minute)
 
     local taskList = self.tasks:get(day)
     for i = 1, #taskList do
         local task = taskList:get(i)
+        --self.logger:log(task)
         if currentTimeMinutes >= task.startTime and currentTimeMinutes <= task.endTime then
             task.callback()
             if task.autoDestroy then
