@@ -398,4 +398,4 @@ FodyWeavers.xsd
 
 # Fichiers de configuration de l'IDE PyCharm
 .idea/
-
+.vscode/
