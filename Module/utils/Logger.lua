@@ -10,7 +10,7 @@ function Logger:init(level, showTimestamp)
     self.levels:add("ERROR", 4)
 
     self.colors = self.dictionary()
-    self.colors:add("DEBUG", "0x00FF00")
+    self.colors:add("DEBUG", "#975df5")
     self.colors:add("INFO", "0x00FFFF")
     self.colors:add("WARNING", "0xFFFF00")
     self.colors:add("ERROR", "0xFF0000")
@@ -32,8 +32,10 @@ function Logger:log(message, header, level)
     elseif type(message) == "table" then
         self:log("Le message et une table, affichage de la table...", "Logger;" .. header, 2)
         self:printTable(message)
-    elseif type(message) == "string" then
-        message = message or "nil"
+    elseif type(message) == "string" or type(message) == "number" or type(message) == "boolean" then
+        if message == nil then
+            message = "nil"
+        end
         message = tostring(message)
         level = level or self.levels:get("DEBUG")
 
@@ -121,41 +123,52 @@ function Logger:listFilteredHeaders()
     return self.filteredHeaders:getKeys()
 end
 
-function Logger:printTable(tab, indent, indent_char, separator, visited, header)
+function Logger:printTable(tab, ignoreKeys, indent, indent_char, separator, visited, header)
     if tab then
         indent = indent or 0
+        ignoreKeys = ignoreKeys or ""
         indent_char = indent_char or "  "
         separator = separator or " : "
         visited = visited or {}
         local indentation = string.rep(indent_char, indent)
         visited[tab] = true
 
+        -- Transform the ignoreKeys string into a table for easier lookup
+        local keysToIgnore = {}
+        for key in string.gmatch(ignoreKeys, '([^;]+)') do
+            keysToIgnore[key] = true
+        end
+
         for cle, valeur in pairs(tab) do
-            local currentHeader = header or ""
-            if type(valeur) == "table" then
-                if valeur.className then
-                    currentHeader = "ValueOf" .. valeur.className
-                else
-                    currentHeader = tab.className or currentHeader
-                end
-                self:log(indentation .. tostring(cle) .. separator, currentHeader)
-                if not visited[valeur] then
-                    self:printTable(valeur, indent + 1, indent_char, separator, visited, currentHeader)
-                else
+            -- Skip if key is in the keys to ignore
+            if not keysToIgnore[cle] then
+                local currentHeader = header or ""
+                if type(valeur) == "table" then
                     if valeur.className then
-                        valeur = "Class " .. valeur.className
+                        currentHeader = "ValueOf" .. valeur.className
+                    else
+                        currentHeader = tab.className or currentHeader
                     end
-                    self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]", currentHeader)
+                    self:log(indentation .. tostring(cle) .. separator, currentHeader)
+                    if not visited[valeur] then
+                        self:printTable(valeur, ignoreKeys, indent + 1, indent_char, separator, visited, currentHeader)
+                    else
+                        if valeur.className then
+                            valeur = "Class " .. valeur.className
+                        end
+                        self:log(indentation .. indent_char .. tostring(valeur) .. " [référence déjà visitée]", currentHeader)
+                    end
+                else
+                    if tab.className then
+                        currentHeader = "ValueOf" .. tab.className
+                    end
+                    self:log(indentation .. tostring(cle) .. separator .. tostring(valeur), currentHeader)
                 end
-            else
-                if tab.className then
-                    currentHeader = "ValueOf" .. tab.className
-                end
-                self:log(indentation .. tostring(cle) .. separator .. tostring(valeur), currentHeader)
             end
         end
     end
 end
+
 
 
 -- function Logger:printTable(tab, indent, indent_char, separator, visited, header)

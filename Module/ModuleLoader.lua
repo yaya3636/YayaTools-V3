@@ -16,7 +16,7 @@ logger.newInstance = logger
 
 local ModuleLoader = class('ModuleLoader')
 
-local function addSecondaryInit(c, attributes)
+local function addSecondaryInit(c, attributes) -- Fonction de surcharge de l'init
     local originalInit = c.init
 
     c.init = function(self, ...)
@@ -32,43 +32,62 @@ local function addSecondaryInit(c, attributes)
     return c
 end
 
-function ModuleLoader:init(loggerLevel)
-    self.singletonInstances = dictionary()
-    self.modulePaths = dictionary()
-    self.modulePaths:add("List", moduleDirectory .. "collections\\List.lua")
-    :add("LinkedList", moduleDirectory .. "collections\\LinkedList.lua")
-    :add("Node", moduleDirectory .. "collections\\Node.lua")
-    :add("Dictionary", moduleDirectory .. "collections\\Dictionary.lua")
-    :add("Logger", moduleDirectory .. "utils\\Logger.lua")
-    :add("Json", moduleDirectory .. "utils\\Json.lua")
-    :add("TypedObject", moduleDirectory .. "typeChecker\\TypedObject.lua")
-    :add("Person", moduleDirectory .. "typeChecker\\PersonTyped.lua")
-    :add("Sheduler", moduleDirectory .. "time\\Sheduler.lua")
-    :add("ShedulerTask", moduleDirectory .. "time\\ShedulerTask.lua")
-    :add("WorldTimeAPI", moduleDirectory .. "time\\WorldTimeAPI.lua")
-    :add("PacketManager", moduleDirectory .. "packet\\PacketManager.lua")
-    :add("AStar", moduleDirectory .. "map\\AStar.lua")
-    :add("AStarNode", moduleDirectory .. "map\\AStarNode.lua")
-    :add("Areas", moduleDirectory .. "map\\Areas.lua")
-    :add("SubAreas", moduleDirectory .. "map\\SubAreas.lua")
-    :add("Monsters", moduleDirectory .. "monsters\\Monsters.lua")
-    :add("Recipes", moduleDirectory .. "recipes\\Recipes.lua")
+function ModuleLoader:init(loggerLevel) -- Initialise le ModuleLoader
+    self.logger = logger(loggerLevel)
+    self.logger:filterHeader("Dictionary", true)
 
 
     self.moduleLoaded = dictionary()
     self.moduleLoaded:add("class", class)
 
-    self.logger = logger(loggerLevel)
-    self.logger:filterHeader("Dictionary", true)
+    self.singletonInstances = dictionary()
+    self.modulesPaths = dictionary()
+    self.modulesDirectory = list()
+    self.modulesDirectory
+    :add("async")
+    :add("collections")
+    :add("fight")
+    :add("map")
+    :add("monsters")
+    :add("packet")
+    :add("player")
+    :add("recipes")
+    :add("time")
+    :add("utils")
+
+    for _, v in pairs(self.modulesDirectory) do
+        local allFilesName = global:getAllFilesNameInDirectory(moduleDirectory .. v, ".lua")
+        for _, v2 in pairs(allFilesName) do
+            --self.logger:log("Module " .. v2:gsub("%.lua$", "") .. " loaded")
+            self.modulesPaths:add(v2:gsub("%.lua$", ""), moduleDirectory .. v .. "\\" .. v2)
+        end
+    end
+
+    self.moduleLoaded = dictionary()
+    self.moduleLoaded:add("class", class)
+    --self.modulesPaths:getKeys():forEach(function(mod) self:load(mod) end)
 end
 
-function ModuleLoader:load(moduleName)
+function ModuleLoader:initCallback() -- Initialise les callbacks de tout les modules chargé
+    PacketManager = self:load("PacketManager")
+    for modName, mod in pairs(self.moduleLoaded) do
+        if mod.initCallback then
+            for k, v in pairs(mod) do
+                if string.sub(k, 1, 3) == "cb_" then
+                    PacketManager:subscribePacket(string.sub(k, 4, #k), v)
+                end
+            end
+        end
+    end
+end
+
+function ModuleLoader:load(moduleName) -- Fonction pour charger un module
     local newClass
 
     if self.moduleLoaded:containsKey(moduleName) then
         newClass = self.moduleLoaded:get(moduleName)
     else
-        self.modulePaths:forEach(function(knownModuleName, modulePath)
+        self.modulesPaths:forEach(function(knownModuleName, modulePath)
             if string.lower(knownModuleName) == string.lower(moduleName) then
                 newClass = self:loadModuleFromFile(modulePath)
                 self.moduleLoaded:add(string.lower(moduleName), newClass)
@@ -88,7 +107,7 @@ function ModuleLoader:load(moduleName)
     return newClass
 end
 
-function ModuleLoader:updateClassDependency()
+function ModuleLoader:updateClassDependency() -- Met a jour les class chargé par ( class ) dans tous les modules
     for moduleName, module in pairs(self.moduleLoaded) do
         if module.class then
             module.class = class
@@ -96,7 +115,7 @@ function ModuleLoader:updateClassDependency()
     end
 end
 
-function ModuleLoader:resolveDependencies(classDefinition)
+function ModuleLoader:resolveDependencies(classDefinition) -- Fournit les dépendances requise pour les modules chargé
     local dependencies = {}
     if classDefinition.dependencies then
         for _, dependencyPath in ipairs(classDefinition.dependencies) do
@@ -107,7 +126,7 @@ function ModuleLoader:resolveDependencies(classDefinition)
     return dependencies
 end
 
-function ModuleLoader:getSingletonInstance(moduleName, classDefinition)
+function ModuleLoader:getSingletonInstance(moduleName, classDefinition) -- Renvoie une instance unique d'un module
     if not self.singletonInstances:containsKey(moduleName) then
         local instance = classDefinition()
         self.singletonInstances:add(moduleName, instance)
@@ -115,7 +134,7 @@ function ModuleLoader:getSingletonInstance(moduleName, classDefinition)
     return self.singletonInstances:get(moduleName)
 end
 
-function ModuleLoader:loadModuleFromFile(modulePath)
+function ModuleLoader:loadModuleFromFile(modulePath) -- Charge et prépare un module
     local classDefinition = dofile(modulePath)
 
     local dependencies = self:resolveDependencies(classDefinition)
@@ -134,11 +153,11 @@ function ModuleLoader:loadModuleFromFile(modulePath)
     if not classDefinition.noLogger then
         newClass = addSecondaryInit(newClass, {logger = self.logger})
     end
-
+    
     return newClass
 end
 
-function ModuleLoader:listLoggerFilteredHeaders()
+function ModuleLoader:listLoggerFilteredHeaders() -- Renvoie la liste des headers filtre
     return self.logger:listFilteredHeaders()
 end
 

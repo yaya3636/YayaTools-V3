@@ -11,7 +11,7 @@ end
 -- Enregistre un packet
 function packetManager:registerPacket(kPacketName)
     if not self.subscribedPacket:containsKey(kPacketName) then
-        self.logger:log(kPacketName, "Packet", 3)
+        --self.logger:log(kPacketName, "Packet", 3)
         if developer:isMessageRegistred(kPacketName) then
             developer:unRegisterMessage(kPacketName)
         end
@@ -22,7 +22,7 @@ end
 
 -- Ajoute un callback à un packet
 function packetManager:addCallback(kPacketName, vCallBack)
-    local signatureFunc = string.dump(vCallBack)
+    local signatureFunc = tostring(vCallBack)
     --self.logger:log(signatureFunc)
     if not self.subscribedPacket:get(kPacketName):some(function (k)
         if tostring(k) == tostring(signatureFunc) then
@@ -33,7 +33,37 @@ function packetManager:addCallback(kPacketName, vCallBack)
         self.subscribedPacket:get(kPacketName):add(tostring(signatureFunc), vCallBack)
         self["suspendScriptUntil" .. kPacketName] = developer:suspendScriptUntil(kPacketName, 0, false, "", 1)
     else
-        self.logger:warning("La fonction de callback est déja définie au packet : " .. kPacketName, "Packet")
+        self.logger:warning("La fonction de callback (" .. signatureFunc .. ") est déja définie au packet : " .. kPacketName, "Packet")
+    end
+end
+
+-- Ajoute un callback à un packet
+function packetManager:removeCallback(kPacketName, vCallBack)
+    local signatureFunc
+    if type(vCallBack) == "string" then
+        if vCallBack:sub(1, 9) == "function:" then
+            signatureFunc = vCallBack
+        else
+            self.logger:warning("La signature de callback (" .. tostring(vCallBack) .. ") n'est pas valide", "Packet")
+            return
+        end
+    elseif type(vCallBack) == "function" then
+        signatureFunc = tostring(vCallBack)
+    else
+        self.logger:warning("La fonction de callback (" .. tostring(vCallBack) .. ") n'est pas une fonction ou une signature de fonction", "Packet")
+        return
+    end
+
+    self.logger:log(signatureFunc)
+    if self.subscribedPacket:get(kPacketName):some(function (k)
+        if tostring(k) == tostring(signatureFunc) then
+            return true
+        end
+    end) then
+        self.logger:info("Supression du callback au packet : " .. kPacketName, "Packet")
+        self.subscribedPacket:get(kPacketName):remove(tostring(signatureFunc))
+    else
+        self.logger:warning("La fonction de callback (" .. signatureFunc .. ") n'éxiste pas au packet : " .. kPacketName, "Packet")
     end
 end
 
@@ -43,7 +73,7 @@ function packetManager:setCallbackFunction(kPacketName)
         self[kPacketName] = function(msg)
             local tblFunc = self.subscribedPacket:get(developer:typeOf(msg))
             for _, v in pairs(tblFunc) do
-                v(msg)
+                v(msg, self.logger)
             end
         end
     end
