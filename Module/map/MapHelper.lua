@@ -3,75 +3,22 @@ local mapHelper = {
     cellArray = {}
 }
 
-mapHelper.gatherElements = {
-    ["1"] = "Frêne",
-    ["8"] = "Chêne",
-    ["17"] = "Fer",
-    ["24"] = "Argent",
-    ["25"] = "Or",
-    ["26"] = "Pierre de Bauxite",
-    ["28"] = "If",
-    ["29"] = "Ebène",
-    ["30"] = "Orme",
-    ["31"] = "Erable",
-    ["32"] = "Charme",
-    ["33"] = "Châtaignier",
-    ["34"] = "Noyer",
-    ["35"] = "Merisier",
-    ["37"] = "Pierre de Kobalte",
-    ["38"] = "Blé",
-    ["39"] = "Houblon",
-    ["42"] = "Lin",
-    ["43"] = "Orge",
-    ["44"] = "Seigle",
-    ["45"] = "Avoine",
-    ["46"] = "Chanvre",
-    ["47"] = "Malt",
-    ["52"] = "Etain",
-    ["53"] = "Pierre Cuivrée",
-    ["54"] = "Manganèse",
-    ["55"] = "Bronze",
-    ["61"] = "Edelweiss",
-    ["66"] = "Menthe Sauvage",
-    ["67"] = "Trèfle à 5 feuilles",
-    ["68"] = "Orchidée Freyesque",
-    ["71"] = "Petits poissons (mer)",
-    ["72"] = "Somoon Agressif",
-    ["73"] = "Pwoulpe",
-    ["74"] = "Poissons (rivière)",
-    ["75"] = "Petits poissons (rivière)",
-    ["76"] = "Gros poissons (rivière)",
-    ["77"] = "Poissons (mer)",
-    ["78"] = "Gros poissons (mer)",
-    ["79"] = "Poissons géants (rivière)",
-    ["80"] = "Truite Vaseuse",
-    ["81"] = "Poissons géants (mer)",
-    ["84"] = "Puits",
-    ["98"] = "Bombu",
-    ["100"] = "Pichon",
-    ["101"] = "Oliviolet",
-    ["108"] = "Bambou",
-    ["109"] = "Bambou sombre",
-    ["110"] = "Bambou sacré",
-    ["111"] = "Riz",
-    ["112"] = "Pandouille",
-    ["113"] = "Dolomite",
-    ["114"] = "Silicate",
-    ["121"] = "Kaliptus",
-    ["131"] = "Perce-neige",
-    ["132"] = "Poisson de Frigost",
-    ["133"] = "Tremble",
-    ["134"] = "Frostiz",
-    ["135"] = "Obsidienne",
-    ["169"] = "Bar Akouda",
-    ["221"] = "Fleur de Sutol",
-    ["225"] = "Piraniak"
-}
-
 function mapHelper:init()
     self.directions = self.list()
-    local tmp = self.gatherElements
-    self.gatherElements = self.dictionary():fromTable(tmp)
+    self.gatherElements = self.dictionary()
+    local interactiveString = dofile(global:getCurrentDirectory() .. [[Sandbox\YayaToolsV3\Data\Interactives.lua]])
+
+    for line in interactiveString:gmatch("[^\r\n]+") do
+        local parts = self.utils:split(line, " - ")
+        if #parts > 0 then
+            local key = parts[1]
+            local value = ""
+            for i = 3, #parts - 1 do
+                value = value .. " " .. parts[i]
+            end
+            self.gatherElements:add(key, value)
+        end
+    end
 
     self.directions:add("left")
     self.directions:add("right")
@@ -324,17 +271,32 @@ end
 
 function mapHelper:getGatherElements()
     local m = map:getMap()
+    local statedElements = self.dictionary()
+    for _, statedElement in pairs(m.statedElements) do
+        local stated = {
+            elementId = statedElement.elementId,
+            elementCellId = statedElement.elementCellId,
+            elementState = statedElement.elementState,
+            onCurrentMap = statedElement.onCurrentMap
+        }
+        statedElements:add(tostring(statedElement.elementId), stated)
+    end
+
     local ret = {}
-    for _, interactive in pairs(m.interactiveElements) do
-        local elementName = self.gatherElements:get(tostring(interactive.elementTypeId))
-        if elementName then
-            if ret[elementName] == nil then
-                ret[elementName] = {
-                    count = 1,
-                    typeId = interactive.elementTypeId
-                }
-            else
-                ret[elementName].count = ret[elementName].count + 1
+    for _, interactive in pairs(m.integereractiveElements) do
+        local stated = statedElements:get(tostring(interactive.elementId))
+
+        if stated and interactive.onCurrentMap and stated.onCurrentMap  then
+            local elementName = self.gatherElements:get(tostring(interactive.elementTypeId))
+            if elementName then
+                if ret[elementName] == nil then
+                    ret[elementName] = {
+                        count = 1,
+                        typeId = interactive.elementTypeId
+                    }
+                else
+                    ret[elementName].count = ret[elementName].count + 1
+                end
             end
         end
     end
@@ -344,12 +306,13 @@ end
 function mapHelper:getGatherElementsByZone()
     local walkableZones = self:getWalkableZones()
     local m = map:getMap()
+
     local ret = {}
-    for _, interactive in pairs(m.interactiveElements) do
+    for _, interactive in pairs(m.integereractiveElements) do
         local elementName = self.gatherElements:get(tostring(interactive.elementTypeId))
         if elementName then
             for _, statedElement in pairs(m.statedElements) do
-                if interactive.elementId == statedElement.elementId then
+                if interactive.elementId == statedElement.elementId and interactive.onCurrentMap then
                     if ret[elementName] == nil then
                         ret[elementName] = {
                             count = 1,

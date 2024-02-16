@@ -49,6 +49,7 @@ function ModuleLoader:init(loggerLevel) -- Initialise le ModuleLoader
     :add("fight")
     :add("map")
     :add("monsters")
+    :add("notifications")
     :add("packet")
     :add("player")
     :add("recipes")

@@ -67,13 +67,16 @@ end
 
 function Utils:uuid()
     local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-    local ret = string.gsub(template, '[xy]', function (c)
-        local v = (c == 'x') and global:random(0, 0xf) or global:random(8, 0xb)
-        if c == 'y' then
-            v = bit32.bor(bit32.band(v, 0x3), 0x8)
+
+    local function randomHexDigit(c)
+        if c == 'x' then
+            return string.format('%x', global:random(0, 15))
+        elseif c == 'y' then
+            return string.format('%x', global:random(8, 11))
         end
-        return string.format('%x', v)
-    end)
+    end
+
+    local ret = string.gsub(template, '[xy]', randomHexDigit)
     return ret
 end
 
@@ -107,6 +110,35 @@ function Utils:convertNumberValueToStrings(t)
     return newTable
 end
 
+function Utils:stringToTable(str)
+    local tbl = {}
+    for k, v in string.gmatch(str, "(%w+):(%w+)") do
+        tbl[k] = v == "true"
+    end
+    return tbl
+end
+
+function Utils:tableToString(table)
+    local str = ""
+    for k,v in pairs(table) do
+        str = str..tostring(k)..":"..tostring(v)..","
+    end
+    return str
+end
+
+function Utils:countIdenticalItems(tbl)
+    local count = {}
+    for _, item in ipairs(tbl) do
+        local itemStr = self:tableToString(item)
+        if count[itemStr] then
+            count[itemStr] = count[itemStr] + 1
+        else
+            count[itemStr] = 1
+        end
+    end
+    return count
+end
+
 function Utils:measureExecutionTime(functionToExecute, ...)
     local startTime = os.clock()
     local results = { functionToExecute(...) }
@@ -114,6 +146,14 @@ function Utils:measureExecutionTime(functionToExecute, ...)
     local executionTime = endTime - startTime
 
     return executionTime, unpack(results)
+end
+
+function Utils:split(str, delimiter)
+    local result = {}
+    for match in (str..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, match)
+    end
+    return result
 end
 
 return Utils
